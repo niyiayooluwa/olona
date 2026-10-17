@@ -1,0 +1,16 @@
+# Secrets. .env carries DATABASE_URL, JWT_SECRET and SMTP_PASSWORD; it must
+# never reach an image, and never reach a public Space's build log.
+.env
+.env.*
+*.env
+
+# Build output and tooling state.
+bin/
+.git/
+.gitignore
+
+# Test and dev artifacts.
+*_test.go
+staticcheck.conf
+Makefile
+sqlc.yaml

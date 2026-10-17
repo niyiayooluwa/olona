@@ -1,0 +1,22 @@
+# CODEOWNERS — auto-requests review based on which files a PR touches.
+
+# Replace @niyi-github-handle / @lekan-github-handle / @nelson-github-handle
+
+# with actual GitHub usernames. Last match wins, so specific paths go lower.
+
+# Default: no owner, anyone can review
+
+-
+
+# --- Flutter app ---
+
+/app/ @niyiayooluwa @BoladeOlalekan
+
+# --- Go server ---
+
+/server/ @niyiayooluwa @BoladeOlalekan @ayodejiadewusi88
+
+# --- Repo/CI config ---
+
+/.github/ @niyiayooluwa
+/app/pubspec.yaml @niyiayooluwa

@@ -1,0 +1,569 @@
+basePath: /
+definitions:
+  handler.AcceptInviteRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.ChangePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handler.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.ResendOTPRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handler.ResetPasswordRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      new_password:
+        type: string
+    type: object
+  handler.SignupRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.SignupResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.TokenPairResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  handler.UpdateProfileRequest:
+    properties:
+      avatar_url:
+        type: string
+      display_name:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+    type: object
+  handler.VerifyRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    type: object
+  model.UserProfile:
+    properties:
+      avatarURL:
+        type: string
+      displayName:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      isVerified:
+        type: boolean
+      lastName:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Backend for Olona — Auth and User Management
+  title: Olona API
+  version: "1.0"
+paths:
+  /auth/accept-invite:
+    post:
+      consumes:
+      - application/json
+      description: Creates an account using an invite token.
+      parameters:
+      - description: Invite details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AcceptInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TokenPairResponse'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: invalid token
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: username already claimed
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Accept invitation
+      tags:
+      - auth
+  /auth/check-username:
+    get:
+      description: Checks if a username is available for registration.
+      parameters:
+      - description: Username to check
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: missing parameter
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Check username availability
+      tags:
+      - auth
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Sends a password reset OTP to the email if it exists.
+      parameters:
+      - description: Email address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Request password reset
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a token pair.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TokenPairResponse'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: invalid credentials
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Login to account
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes the provided refresh token.
+      parameters:
+      - description: Refresh token to revoke
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a valid refresh token for a new token pair.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TokenPairResponse'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: invalid or expired token
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Refresh token pair
+      tags:
+      - auth
+  /auth/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Sends a new verification OTP to the user's email.
+      parameters:
+      - description: Email to resend OTP
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "429":
+          description: cooldown active
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Resend verification OTP
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Resets user password using the OTP received via email.
+      parameters:
+      - description: Reset details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: invalid or expired OTP
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Reset password
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Registers a new user and sends an OTP for email verification.
+        A duplicate email is NOT reported as an error. The handler
+        returns 202 with an identical body to a successful 201 so that
+        the endpoint cannot be used to discover which addresses have
+        accounts. Clients must treat 202 as "check your inbox" exactly
+        as they treat 201 — no error branch exists for that case.
+        A taken username is reported honestly as 409: it says nothing
+        about any email address, and no account is created when it is
+        returned, so masking it would tell the caller a code was sent
+        for an account that does not exist.
+      parameters:
+      - description: Signup details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.SignupResponse'
+        "202":
+          description: duplicate email, masked as success
+          schema:
+            $ref: '#/definitions/handler.SignupResponse'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: registration disabled
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: username already taken
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "429":
+          description: too many requests
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create a new account
+      tags:
+      - auth
+  /auth/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the 6-digit code sent to the user's email. Returns a token
+        pair upon success.
+      parameters:
+      - description: Email and OTP code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TokenPairResponse'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: invalid or expired OTP
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "429":
+          description: too many attempts
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Confirm signup OTP and activate the account
+      tags:
+      - auth
+  /v1/users/me:
+    delete:
+      description: Allows a user to permanently delete their own account.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete profile
+      tags:
+      - users
+    get:
+      description: Retrieves the profile of the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserProfile'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Updates optional fields of the authenticated user's profile.
+      parameters:
+      - description: Profile details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserProfile'
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: username already claimed
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - users
+  /v1/users/me/password:
+    post:
+      consumes:
+      - application/json
+      description: Allows an authenticated user to update their password.
+      parameters:
+      - description: Password details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid body
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change password
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT access token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
