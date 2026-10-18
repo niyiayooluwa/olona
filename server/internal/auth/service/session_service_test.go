@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"server/internal/auth/config"
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/oauth"
 	db "server/internal/platform/db/generated"

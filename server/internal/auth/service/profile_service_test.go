@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	db "server/internal/platform/db/generated"

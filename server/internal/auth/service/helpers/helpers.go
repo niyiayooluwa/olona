@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"server/internal/auth/config"
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/utils"

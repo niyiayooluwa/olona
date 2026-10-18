@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"server/internal/auth/config"
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/utils"

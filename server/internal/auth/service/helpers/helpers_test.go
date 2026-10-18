@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 )
 
 // TestValidateAvatarURLAcceptsOrdinaryImages covers the values a real client

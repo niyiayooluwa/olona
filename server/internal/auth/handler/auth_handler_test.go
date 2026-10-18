@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/utils"
 
 	"github.com/labstack/echo/v4"

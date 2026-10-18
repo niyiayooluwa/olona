@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	autherr "server/internal/auth/errors"
+	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/service"
 	"server/internal/auth/service/helpers"
