@@ -1,12 +1,10 @@
 # Olona — HTTP Response Contract
 
-> **Status: agreed, not yet implemented.**
-> Every handler in `server/` currently returns an older, flat shape — `{"error": "..."}`,
-> unwrapped payloads, `200` with a prose `message`. This document is the **target**.
-> Nothing here describes live behaviour until the handlers are migrated.
->
-> Auth is deliberately staying on the flat shape for now so it isn't disturbed mid-flight.
-> Migrate when the product work begins.
+> **Status: implemented for Auth.**
+> The flat shape — `{"error": "..."}`, unwrapped payloads, `200` with a prose `message` —
+> has been replaced across `internal/auth`. Every auth handler now returns one of the
+> shapes below, and error replies carry a `code` from §5. New domains (workspaces,
+> catalog, ledger) must follow the same shapes from their first endpoint.
 
 ---
 
@@ -173,9 +171,13 @@ information. This rule applies only to `data` itself, never to its fields.
 
 ## 5. Error codes
 
-A closed set. Derived from the sentinel errors currently mapped in
-`auth_handler.go` → `handleError`. **This table is the contract** — adding an error
-means adding a row here in the same commit.
+A closed set. Auth codes come from the sentinel errors mapped in
+`internal/auth/httperr` → `Classify`; the framework codes (`not_found`,
+`method_not_allowed`, `payload_too_large`, `rate_limited`, `invalid_request`)
+come from `internal/platform/apiresponse` → `ErrorHandler`, which envelopes everything
+Echo or the rate limiter would otherwise answer on its own.
+**This table is the contract** — adding an error means adding a row here in the
+same commit.
 
 ### `400` — request is malformed
 
@@ -191,6 +193,7 @@ means adding a row here in the same commit.
 | `invalid_profile_name` | |
 | `invalid_avatar_url` | |
 | `missing_parameter` | A required query parameter was absent. |
+| `invalid_request` | Fallback for a malformed request the app did not classify. |
 
 ### `401` — not authenticated, or deliberately ambiguous
 
@@ -223,12 +226,25 @@ means adding a row here in the same commit.
 | --- | --- |
 | `account_suspended` | |
 | `account_deactivated` | |
+| `forbidden` | Authenticated, but this action is not permitted for your role. |
 
 ### `404`
 
 | `code` | Meaning |
 | --- | --- |
 | `not_found` | Generic. Never reveal *which* resource — see `AUTH-04`. |
+
+### `405` — method not allowed
+
+| `code` | Meaning |
+| --- | --- |
+| `method_not_allowed` | The URL exists, but not for this HTTP method. |
+
+### `413` — payload too large
+
+| `code` | Meaning |
+| --- | --- |
+| `payload_too_large` | The request body exceeds the server's limit. |
 
 ### `409` — conflicts with existing state
 
@@ -243,6 +259,7 @@ means adding a row here in the same commit.
 | --- | --- |
 | `otp_max_attempts` | |
 | `otp_cooldown` | Resend cooldown still active. |
+| `rate_limited` | Too many requests from this client; `Retry-After` gives the wait. |
 
 ### `500`
 
