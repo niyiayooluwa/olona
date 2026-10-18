@@ -1,9 +1,12 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"server/internal/platform/apiresponse"
 
 	"github.com/labstack/echo/v4"
 )
@@ -93,5 +96,36 @@ func TestAuthRateLimiterKeepsSeparateBucketsPerResolvedClient(t *testing.T) {
 	}
 	if got := call("198.51.100.8:1000"); got != http.StatusOK {
 		t.Fatalf("second client, first request = %d, want 200 — one client must not lock out another", got)
+	}
+}
+
+// TestAuthRateLimiterEmitsEnvelope covers the one 429 the handlers do not
+// produce: httprate answers over-limit requests itself, and without a limit
+// handler its body is plain-text "Too Many Requests" rather than the envelope.
+func TestAuthRateLimiterEmitsEnvelope(t *testing.T) {
+	e := echo.New()
+	e.Use(authRateLimiter(echo.ExtractIPDirect(), 1))
+	e.POST("/limited", func(c echo.Context) error { return c.NoContent(http.StatusNoContent) })
+
+	first := httptest.NewRecorder()
+	e.ServeHTTP(first, httptest.NewRequest(http.MethodPost, "/limited", nil))
+	if first.Code != http.StatusNoContent {
+		t.Fatalf("first request status = %d, want 204 (body: %s)", first.Code, first.Body.String())
+	}
+
+	second := httptest.NewRecorder()
+	e.ServeHTTP(second, httptest.NewRequest(http.MethodPost, "/limited", nil))
+	if second.Code != http.StatusTooManyRequests {
+		t.Fatalf("second request status = %d, want 429 (body: %s)", second.Code, second.Body.String())
+	}
+	if second.Header().Get("Retry-After") == "" {
+		t.Error("a 429 must carry Retry-After")
+	}
+	var got apiresponse.ErrorEnvelope
+	if err := json.Unmarshal(second.Body.Bytes(), &got); err != nil {
+		t.Fatalf("429 body is not the envelope: %v (body: %s)", err, second.Body.String())
+	}
+	if got.Error.Code != "rate_limited" {
+		t.Fatalf("code = %q, want rate_limited", got.Error.Code)
 	}
 }

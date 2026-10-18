@@ -2,21 +2,17 @@
 package httpserver
 
 import (
-	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
-	"strings"
-	"time"
 
 	"server/internal/auth/handler"
 	authmw "server/internal/auth/middleware"
 	"server/internal/auth/repository"
 	"server/internal/auth/token"
+	"server/internal/platform/apiresponse"
 
 	_ "server/docs"
 
-	"github.com/go-chi/httprate"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -47,6 +43,14 @@ func NewRouter(
 	authRateLimitPerMinute int,
 ) *echo.Echo {
 	e := echo.New()
+
+	// Every error reply must be the envelope, including the ones Echo answers
+	// on its own: an unknown route (404), a wrong method (405), an oversized
+	// body from BodyLimit (413), and any panic caught by Recover (500).
+	// apiresponse.ErrorHandler is what turns those into the envelope; without
+	// it they come back as Echo's default {"message": "..."} and the client
+	// would have to handle a second shape forever.
+	e.HTTPErrorHandler = apiresponse.ErrorHandler
 
 	// Resolve the true client IP before any middleware that keys on it runs.
 	e.IPExtractor = buildIPExtractor(trustedProxyCIDRs)
@@ -147,84 +151,4 @@ func NewRouter(
 	userGroup.DELETE("/me", h.Auth.DeleteProfile)
 
 	return e
-}
-
-// authRateLimiter builds the middleware that caps the unauthenticated auth
-// routes.
-//
-// extractor is threaded in rather than derived here so the limiter buckets on
-// exactly the client IP the rest of the pipeline resolved. Deriving it a second
-// time would be a chance for the two to disagree, and a disagreement is
-// invisible until one user locks out everyone else.
-func authRateLimiter(extractor echo.IPExtractor, perMinute int) echo.MiddlewareFunc {
-	return echo.WrapMiddleware(
-		httprate.LimitBy(perMinute, time.Minute, clientIPKey(extractor)),
-	)
-}
-
-// buildIPExtractor returns the Echo IPExtractor matching the deployment's trust
-// model.
-//
-//   - No trusted proxies configured -> ExtractIPDirect: uses r.RemoteAddr and
-//     ignores X-Forwarded-For entirely. Correct for a server reachable
-//     directly on the internet, and the only safe default when the proxy chain
-//     is unknown.
-//   - Trusted proxies configured -> ExtractIPFromXFFHeader with one TrustIPRange
-//     per CIDR. Echo walks X-Forwarded-For right-to-left, discarding hops that
-//     fall inside a trusted range, and returns the first untrusted address.
-//
-// Trusting the whole X-Forwarded-For header without a range check would let any
-// client set its own apparent IP and walk straight through the rate limiter, so
-// the CIDR list is what makes header-based resolution safe. Adding or removing a
-// proxy is a config change, never a code change.
-func buildIPExtractor(cidrs []string) echo.IPExtractor {
-	if len(cidrs) == 0 {
-		return echo.ExtractIPDirect()
-	}
-
-	opts := make([]echo.TrustOption, 0, len(cidrs))
-	for _, cidr := range cidrs {
-		_, network, err := net.ParseCIDR(strings.TrimSpace(cidr))
-		if err != nil {
-			// A malformed entry is a configuration mistake worth reporting, but
-			// skipping it is safer than refusing to boot: the server comes up in
-			// direct mode, which cannot be spoofed. Silently trusting a garbage
-			// range would be the dangerous outcome.
-			slog.Warn("TRUSTED_PROXY_CIDRS: skipping invalid CIDR", "cidr", cidr, "error", err)
-			continue
-		}
-		opts = append(opts, echo.TrustIPRange(network))
-	}
-
-	// Every entry was malformed, so there is nothing to trust.
-	if len(opts) == 0 {
-		return echo.ExtractIPDirect()
-	}
-	return echo.ExtractIPFromXFFHeader(opts...)
-}
-
-// clientIPKey adapts an Echo IPExtractor to the key function httprate expects.
-//
-// The extractor is threaded through rather than re-derived so the rate limiter
-// buckets on exactly the same client IP the rest of the request pipeline sees,
-// whether the deployment is direct or proxied.
-func clientIPKey(extractor echo.IPExtractor) httprate.KeyFunc {
-	return func(r *http.Request) (string, error) {
-		ip := extractor(r)
-		// Bucket IPv6 by /64 rather than by full address. A client with a
-		// delegated prefix can rotate addresses inside it, and keying on the
-		// full address would hand it a fresh rate-limit bucket for free.
-		//
-		// CanonicalizeIP rewrites IPv6 to its /64 prefix and returns IPv4
-		// unchanged, so a rewritten key means the input was a real IPv6
-		// address. An unchanged key is either a genuine IPv4 address, which
-		// is already the right bucket, or a value that is not an IP at all —
-		// which is prefixed so an unresolvable client cannot be conflated
-		// with a real one.
-		canonical := httprate.CanonicalizeIP(ip)
-		if canonical != ip || net.ParseIP(ip) != nil {
-			return canonical, nil
-		}
-		return fmt.Sprintf("unresolvable:%s", ip), nil
-	}
 }
