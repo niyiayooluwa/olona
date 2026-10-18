@@ -46,7 +46,7 @@ The auth subsystem is designed as an **Off-The-Counter (OTC)** reusable module f
 
 ### Core Invariants:
 1. **Single Responsibility Principle (SRP):** Six dedicated services manage independent domains. Route handlers inject only the service they require.
-2. **Zero Database Leaks:** Higher layers (handlers/services) never import `server/internal/db/generated` directly. The `AuthRepository` interface abstracts all database access.
+2. **Zero Database Leaks:** Higher layers (handlers/services) never import `server/internal/platform/db/generated` directly. The `AuthRepository` interface abstracts all database access.
 3. **Transport Agnostic:** Service logic does not depend on HTTP frameworks, headers, or cookies. It accepts domain inputs and returns domain outputs.
 4. **Defense in Depth:** Timing-attack mitigations, pessimistic row-level locking on OTPs, and refresh token replay theft detection are enforced within the service layer.
 
@@ -56,41 +56,58 @@ The auth subsystem is designed as an **Off-The-Counter (OTC)** reusable module f
 
 ```text
 server/internal/auth/
-├── DOCS.md                    # Architecture and API reference
 ├── config/
 │   └── config.go              # AuthConfig structs & default production config
-├── errors/
+├── autherr/
 │   └── errors.go              # Domain sentinel errors (package autherr)
+├── httperr/
+│   └── classify.go            # Sentinel-error -> HTTP mapping (Classify, Fail, InvalidBody)
 ├── model/
 │   └── model.go               # Shared structs (TokenPair, UserProfile, ProfileInput, InvitationDetails, Mailer)
+├── handler/
+│   ├── auth_handler.go        # HTTP handlers (Echo), envelope-migrated
+│   ├── auth_handler_test.go   # Handler unit tests
+│   ├── request.go             # Request DTOs
+│   └── response.go            # Success-envelope builders
+├── middleware/
+│   ├── middleware.go          # RequireAuth, LoadUser, RequireRole, GetUserID
+│   └── middleware_test.go     # Middleware unit tests
 ├── repository/
 │   ├── repository.go          # AuthRepository interface & SQLC implementation
-│   └── repository_test.go     # Repository unit tests (mocked DB querier)
-├── service/
-│   ├── helpers/
-│   │   └── helpers.go         # Shared helpers (IssueTokenPair, NormalizeEmail, TextToPtr, MapToUserProfile)
-│   ├── oauth/
-│   │   ├── google.go          # Google ID Token validator
-│   │   └── provider.go        # Provider interface & Identity model
-│   ├── invitation_service.go      # InvitationService (Invite, GetInvitation, RevokeInvitation)
-│   ├── invitation_service_test.go # Invitation unit tests
-│   ├── mock_repository_test.go    # In-memory mock AuthRepository, Mailer, and OAuth provider
-│   ├── password_service.go        # PasswordService (ForgotPassword, ResetPassword, ChangePassword)
-│   ├── password_service_test.go   # Password unit tests
-│   ├── profile_service.go         # ProfileService (GetProfile, UpdateProfile, DeleteProfile, CheckUsernameAvailable)
-│   ├── profile_service_test.go    # Profile unit tests
-│   ├── services.go                # Aggregated Services container & NewServices constructor
-│   ├── session_service.go         # SessionService (Login, Refresh, Logout, OAuthLogin)
-│   ├── session_service_test.go    # Session unit tests (timing attack dummy compare, replay detection)
-│   ├── signup_service.go          # SignupService (Signup, VerifyEmail, ResendOTP, AcceptInvite)
-│   ├── signup_service_test.go     # Signup unit tests
-│   ├── user_admin_service.go      # UserAdminService (SuspendUser, UnsuspendUser, DeactivateUser, DeleteUser)
-│   └── user_admin_service_test.go # Admin unit tests
-└── utils/
-    ├── jwt.go                 # HS256 JWT generation and claim verification
-    ├── password.go            # Bcrypt hashing & constant-time dummy comparisons
-    └── tokens.go              # CSPRNG tokens, SHA-256 hasher, 6-digit OTP generator
+│   ├── mapper.go              # db -> domain mapping (MapToUserProfile, TextToPtr)
+│   ├── repository_test.go     # Repository unit tests (mocked DB querier)
+│   └── withtx_test.go         # Transaction-boundary tests
+├── token/
+│   ├── jwt.go                 # HS256 JWT generation and claim verification
+│   └── tokens.go              # CSPRNG tokens, SHA-256 hasher, 6-digit OTP generator
+├── hashing/
+│   ├── password.go            # Bcrypt hashing & constant-time dummy comparisons
+│   └── password_test.go       # Hashing unit tests
+├── validate/
+│   ├── validate.go            # Input checks (email, password, username, profile name, avatar URL)
+│   └── validate_test.go       # Validation unit tests
+└── service/
+    ├── oauth/
+    │   ├── google.go          # Google ID Token validator
+    │   └── provider.go        # Provider interface & Identity model
+    ├── issue_token.go             # issueTokenPair (JWT + persisted refresh token)
+    ├── invitation_service.go      # InvitationService (Invite, GetInvitation, RevokeInvitation)
+    ├── invitation_service_test.go # Invitation unit tests
+    ├── mock_repository_test.go    # In-memory mock AuthRepository, Mailer, and OAuth provider
+    ├── password_service.go        # PasswordService (ForgotPassword, ResetPassword, ChangePassword)
+    ├── password_service_test.go   # Password unit tests
+    ├── profile_service.go         # ProfileService (GetProfile, UpdateProfile, DeleteProfile, CheckUsernameAvailable)
+    ├── profile_service_test.go    # Profile unit tests
+    ├── services.go                # Aggregated Services container & NewServices constructor
+    ├── session_service.go         # SessionService (Login, Refresh, Logout, OAuthLogin)
+    ├── session_service_test.go    # Session unit tests (timing attack dummy compare, replay detection)
+    ├── signup_service.go          # SignupService (Signup, VerifyEmail, ResendOTP, AcceptInvite)
+    ├── signup_service_test.go     # Signup unit tests
+    ├── user_admin_service.go      # UserAdminService (SuspendUser, UnsuspendUser, DeactivateUser, DeleteUser)
+    └── user_admin_service_test.go # Admin unit tests
 ```
+
+Platform-wide packages live under `server/internal/platform/` (`config`, `db/generated`, `mailer`, `httpserver`, `apiresponse`).
 
 ---
 
