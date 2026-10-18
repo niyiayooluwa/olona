@@ -27,6 +27,7 @@ type InvitationDetails struct {
 	Email     string
 	InvitedBy uuid.UUID
 	ExpiresAt time.Time
+	Role      Role
 }
 
 // ProfileInput carries optional user profile fields for signup or profile updates.
