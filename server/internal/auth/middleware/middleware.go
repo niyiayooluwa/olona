@@ -1,12 +1,19 @@
-package handler
+// Package middleware carries the authentication middleware and the context
+// accessors that go with it: RequireAuth validates a JWT, LoadUser loads the
+// account behind it, RequireRole gates on the account's role, and GetUserID
+// reads back the id RequireAuth wrote.
+package middleware
 
 import (
 	"net/http"
 	"strings"
 
+	"server/internal/auth/autherr"
+	"server/internal/auth/httperr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/token"
+	"server/internal/platform/apiresponse"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -20,18 +27,18 @@ func RequireAuth(issuer *token.JWTIssuer) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "missing authorization header"})
+				return apiresponse.Reject(c, http.StatusUnauthorized, "invalid_token", "Sign in to continue.")
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "invalid authorization header format"})
+				return apiresponse.Reject(c, http.StatusUnauthorized, "invalid_token", "Sign in to continue.")
 			}
 
 			tokenString := parts[1]
 			claims, err := issuer.Validate(tokenString)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "invalid or expired token"})
+				return apiresponse.Reject(c, http.StatusUnauthorized, "invalid_token", "Your session has expired. Please sign in again.")
 			}
 
 			// Store user ID in context for downstream handlers
@@ -53,16 +60,16 @@ func LoadUser(repo repository.AuthRepository) echo.MiddlewareFunc {
 			// Fetch the row
 			user, err := repo.GetUserByID(c.Request().Context(), id)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "user does not exist"})
+				return apiresponse.Reject(c, http.StatusUnauthorized, "invalid_token", "Your session has expired. Please sign in again.")
 			}
 
 			// If suspended or deactivated
 			if user.IsSuspended {
-				return c.JSON(http.StatusForbidden, ErrorResponse{Error: "account suspended"})
+				return httperr.Fail(c, autherr.ErrAccountSuspended)
 			}
 
 			if user.IsDeactivated {
-				return c.JSON(http.StatusForbidden, ErrorResponse{Error: "account deactivated"})
+				return httperr.Fail(c, autherr.ErrAccountDeactivated)
 			}
 
 			// Store the account so RequireRole can read it
@@ -88,7 +95,7 @@ func RequireRole(allowed ...model.Role) echo.MiddlewareFunc {
 
 			// Is their role in `allowed`?
 			if !ok {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "not authenticated"})
+				return apiresponse.Reject(c, http.StatusUnauthorized, "invalid_token", "Sign in to continue.")
 			}
 
 			for _, role := range allowed {
@@ -97,7 +104,7 @@ func RequireRole(allowed ...model.Role) echo.MiddlewareFunc {
 				}
 			}
 
-			return c.JSON(http.StatusForbidden, ErrorResponse{Error: "not allowed"})
+			return apiresponse.Reject(c, http.StatusForbidden, "forbidden", "You don't have permission to do that.")
 		}
 	}
 }

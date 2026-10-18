@@ -1,15 +1,13 @@
 package handler
 
+// Request bodies accepted by the auth handlers. Response shapes live in
+// response.go; the errors handlers produce are mapped in internal/auth/httperr.
+
 // SignupRequest holds the necessary fields to register a new user.
 type SignupRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-// SignupResponse is returned upon successful registration.
-type SignupResponse struct {
-	Message string `json:"message"`
 }
 
 // VerifyRequest contains the email and the 6-digit OTP code to verify an account.
@@ -29,12 +27,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 	// AUTH 24 STUB
 	//DeviceID string `json:"device_id"`
-}
-
-// TokenPairResponse represents the JWT access and refresh tokens.
-type TokenPairResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
 }
 
 // RefreshRequest is used to exchange a valid refresh token for a new token pair.
@@ -75,19 +67,9 @@ type UpdateProfileRequest struct {
 	AvatarURL   *string `json:"avatar_url"`
 }
 
-// InviteRequest is used by an admin to invite a new user via email.
-type InviteRequest struct {
-	Email string `json:"email"`
-}
-
 // AcceptInviteRequest allows an invited user to create their account.
 type AcceptInviteRequest struct {
 	Token    string `json:"token"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-}
-
-// ErrorResponse represents a standardized HTTP error payload.
-type ErrorResponse struct {
-	Error string `json:"error"`
 }

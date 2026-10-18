@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"server/internal/auth/handler"
+	authmw "server/internal/auth/middleware"
 	"server/internal/auth/repository"
 	"server/internal/auth/token"
 
@@ -136,7 +137,7 @@ func NewRouter(
 
 	// Protected API Routes
 	v1 := e.Group("/v1")
-	v1.Use(handler.RequireAuth(jwtIssuer), handler.LoadUser(repo))
+	v1.Use(authmw.RequireAuth(jwtIssuer), authmw.LoadUser(repo))
 
 	// User/Profile Protected Routes
 	userGroup := v1.Group("/users")

@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"server/internal/auth/autherr"
+	"server/internal/auth/httperr"
+	"server/internal/auth/middleware"
 	"server/internal/auth/model"
 	"server/internal/auth/service"
-	"server/internal/auth/token"
 	"server/internal/auth/validate"
+	"server/internal/platform/apiresponse"
 
 	"github.com/labstack/echo/v4"
 )
@@ -40,22 +42,22 @@ func NewAuthHandler(svc *service.Services) *AuthHandler {
 // @Accept       json
 // @Produce      json
 // @Param        request body SignupRequest true "Signup details"
-// @Success      201 {object} SignupResponse
-// @Failure      202 {object} SignupResponse "duplicate email, masked as success"
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "registration disabled"
-// @Failure      409 {object} ErrorResponse "username already taken"
-// @Failure      429 {object} ErrorResponse "too many requests"
-// @Failure      500 {object} ErrorResponse "internal error"
+// @Success      201 {object} SignupEnvelope
+// @Failure      202 {object} SignupEnvelope "duplicate email, masked as success"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "registration disabled"
+// @Failure      409 {object} apiresponse.ErrorEnvelope "username already taken"
+// @Failure      429 {object} apiresponse.ErrorEnvelope "too many requests"
+// @Failure      500 {object} apiresponse.ErrorEnvelope "internal error"
 // @Router       /auth/signup [post]
 func (h *AuthHandler) Signup(c echo.Context) error {
 	var req SignupRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	if err := validate.ValidateEmail(req.Email); err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
 	profileInput := model.ProfileInput{}
@@ -71,23 +73,23 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 		// with no user, no profile and no OTP on record — yet the caller was
 		// told a verification code was on its way. Nothing was enumerable from
 		// a taken username, so the mask bought no security and cost the user
-		// the only account they were trying to create. Fall through to
-		// handleError, which reports it as 409.
+		// the only account they were trying to create. Fall through to fail,
+		// which reports it as 409.
 		if errors.Is(err, autherr.ErrEmailAlreadyRegistered) {
-			return c.JSON(http.StatusAccepted, SignupResponse{Message: "If the details are valid, a verification code has been sent."})
+			return c.JSON(http.StatusAccepted, SignupEnvelope{Data: SignupData{VerificationRequired: true}})
 		}
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
 	if tokens != nil {
-		// Open registration where verification is not required
-		return c.JSON(http.StatusCreated, TokenPairResponse{
-			AccessToken:  tokens.AccessToken,
-			RefreshToken: tokens.RefreshToken,
-		})
+		// Open registration where verification is not required.
+		return c.JSON(http.StatusCreated, SignupEnvelope{Data: SignupData{
+			VerificationRequired: false,
+			Tokens:               &TokenPairResponse{AccessToken: tokens.AccessToken, RefreshToken: tokens.RefreshToken},
+		}})
 	}
 
-	return c.JSON(http.StatusCreated, SignupResponse{Message: "account created, check your email for the verification code"})
+	return c.JSON(http.StatusCreated, SignupEnvelope{Data: SignupData{VerificationRequired: true}})
 }
 
 // Verify godoc
@@ -97,31 +99,28 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body VerifyRequest true "Email and OTP code"
-// @Success      200 {object} TokenPairResponse
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "invalid or expired OTP"
-// @Failure      429 {object} ErrorResponse "too many attempts"
-// @Failure      500 {object} ErrorResponse "internal error"
+// @Success      200 {object} TokenPairEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid or expired OTP"
+// @Failure      429 {object} apiresponse.ErrorEnvelope "too many attempts"
+// @Failure      500 {object} apiresponse.ErrorEnvelope "internal error"
 // @Router       /auth/verify [post]
 func (h *AuthHandler) Verify(c echo.Context) error {
 	var req VerifyRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	if err := validate.ValidateEmail(req.Email); err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
 	tokens, err := h.svc.Signup.VerifyEmail(c.Request().Context(), req.Email, req.Code)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, TokenPairResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-	})
+	return c.JSON(http.StatusOK, tokenPair(tokens.AccessToken, tokens.RefreshToken))
 }
 
 // ResendOTP godoc
@@ -131,26 +130,25 @@ func (h *AuthHandler) Verify(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body ResendOTPRequest true "Email to resend OTP"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      429 {object} ErrorResponse "cooldown active"
+// @Success      204 "No Content"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      429 {object} apiresponse.ErrorEnvelope "cooldown active"
 // @Router       /auth/resend-otp [post]
 func (h *AuthHandler) ResendOTP(c echo.Context) error {
 	var req ResendOTPRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	if err := validate.ValidateEmail(req.Email); err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	err := h.svc.Signup.ResendOTP(c.Request().Context(), req.Email)
-	if err != nil {
-		return h.handleError(c, err)
+	if err := h.svc.Signup.ResendOTP(c.Request().Context(), req.Email); err != nil {
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "otp sent if email exists"})
+	return c.NoContent(http.StatusNoContent)
 }
 
 // Login godoc
@@ -160,30 +158,27 @@ func (h *AuthHandler) ResendOTP(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body LoginRequest true "Login credentials"
-// @Success      200 {object} TokenPairResponse
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "invalid credentials"
+// @Success      200 {object} TokenPairEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid credentials"
 // @Router       /auth/login [post]
 func (h *AuthHandler) Login(c echo.Context) error {
 	var req LoginRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	if err := validate.ValidateEmail(req.Email); err != nil {
 		// Do not return ErrInvalidEmail directly to avoid enumeration, use InvalidCredentials
-		return h.handleError(c, autherr.ErrInvalidCredentials)
+		return httperr.Fail(c, autherr.ErrInvalidCredentials)
 	}
 
 	tokens, err := h.svc.Session.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, TokenPairResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-	})
+	return c.JSON(http.StatusOK, tokenPair(tokens.AccessToken, tokens.RefreshToken))
 }
 
 // Refresh godoc
@@ -193,25 +188,22 @@ func (h *AuthHandler) Login(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body RefreshRequest true "Refresh token"
-// @Success      200 {object} TokenPairResponse
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "invalid or expired token"
+// @Success      200 {object} TokenPairEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid or expired token"
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) Refresh(c echo.Context) error {
 	var req RefreshRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	tokens, err := h.svc.Session.Refresh(c.Request().Context(), req.RefreshToken)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, TokenPairResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-	})
+	return c.JSON(http.StatusOK, tokenPair(tokens.AccessToken, tokens.RefreshToken))
 }
 
 // Logout godoc
@@ -222,17 +214,16 @@ func (h *AuthHandler) Refresh(c echo.Context) error {
 // @Produce      json
 // @Param        request body LogoutRequest true "Refresh token to revoke"
 // @Success      204 "No Content"
-// @Failure      400 {object} ErrorResponse "invalid body"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c echo.Context) error {
 	var req LogoutRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
-	err := h.svc.Session.Logout(c.Request().Context(), req.RefreshToken)
-	if err != nil {
-		return h.handleError(c, err)
+	if err := h.svc.Session.Logout(c.Request().Context(), req.RefreshToken); err != nil {
+		return httperr.Fail(c, err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -240,31 +231,32 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 
 // ForgotPassword godoc
 // @Summary      Request password reset
-// @Description  Sends a password reset OTP to the email if it exists.
+// @Description  Sends a password reset OTP to the email if it exists. Always
+// @Description  answers 204, whether or not the address has an account, so the
+// @Description  endpoint cannot be used to enumerate registered emails.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Param        request body ForgotPasswordRequest true "Email address"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} ErrorResponse "invalid body"
+// @Success      204 "No Content"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
 // @Router       /auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 	var req ForgotPasswordRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
+	// Do not leak whether the email is invalid vs not found: same 204 either way.
 	if err := validate.ValidateEmail(req.Email); err != nil {
-		// Do not leak whether the email is invalid vs not found
-		return c.JSON(http.StatusOK, map[string]string{"message": "if the email exists, a reset code was sent"})
+		return c.NoContent(http.StatusNoContent)
 	}
 
-	err := h.svc.Password.ForgotPassword(c.Request().Context(), req.Email)
-	if err != nil {
-		return h.handleError(c, err)
+	if err := h.svc.Password.ForgotPassword(c.Request().Context(), req.Email); err != nil {
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "if the email exists, a reset code was sent"})
+	return c.NoContent(http.StatusNoContent)
 }
 
 // ResetPassword godoc
@@ -274,26 +266,25 @@ func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body ResetPasswordRequest true "Reset details"
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "invalid or expired OTP"
+// @Success      204 "No Content"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid or expired OTP"
 // @Router       /auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c echo.Context) error {
 	var req ResetPasswordRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	if err := validate.ValidateEmail(req.Email); err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	err := h.svc.Password.ResetPassword(c.Request().Context(), req.Email, req.Code, req.NewPassword)
-	if err != nil {
-		return h.handleError(c, err)
+	if err := h.svc.Password.ResetPassword(c.Request().Context(), req.Email, req.Code, req.NewPassword); err != nil {
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "password reset successfully"})
+	return c.NoContent(http.StatusNoContent)
 }
 
 // ChangePassword godoc
@@ -304,23 +295,22 @@ func (h *AuthHandler) ResetPassword(c echo.Context) error {
 // @Produce      json
 // @Param        request body ChangePasswordRequest true "Password details"
 // @Security     BearerAuth
-// @Success      200 {object} map[string]string
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "unauthorized"
+// @Success      204 "No Content"
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "unauthorized"
 // @Router       /v1/users/me/password [post]
 func (h *AuthHandler) ChangePassword(c echo.Context) error {
 	var req ChangePasswordRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
-	userID := GetUserID(c)
-	err := h.svc.Password.ChangePassword(c.Request().Context(), userID, req.OldPassword, req.NewPassword)
-	if err != nil {
-		return h.handleError(c, err)
+	userID := middleware.GetUserID(c)
+	if err := h.svc.Password.ChangePassword(c.Request().Context(), userID, req.OldPassword, req.NewPassword); err != nil {
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "password changed successfully"})
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetProfile godoc
@@ -329,17 +319,17 @@ func (h *AuthHandler) ChangePassword(c echo.Context) error {
 // @Tags         users
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200 {object} model.UserProfile
-// @Failure      401 {object} ErrorResponse "unauthorized"
+// @Success      200 {object} ProfileEnvelope
+// @Failure      401 {object} apiresponse.ErrorEnvelope "unauthorized"
 // @Router       /v1/users/me [get]
 func (h *AuthHandler) GetProfile(c echo.Context) error {
-	userID := GetUserID(c)
+	userID := middleware.GetUserID(c)
 	profile, err := h.svc.Profile.GetProfile(c.Request().Context(), userID)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, profile)
+	return c.JSON(http.StatusOK, ProfileEnvelope{Data: profile})
 }
 
 // UpdateProfile godoc
@@ -350,18 +340,18 @@ func (h *AuthHandler) GetProfile(c echo.Context) error {
 // @Produce      json
 // @Param        request body UpdateProfileRequest true "Profile details"
 // @Security     BearerAuth
-// @Success      200 {object} model.UserProfile
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "unauthorized"
-// @Failure      409 {object} ErrorResponse "username already claimed"
+// @Success      200 {object} ProfileEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "unauthorized"
+// @Failure      409 {object} apiresponse.ErrorEnvelope "username already claimed"
 // @Router       /v1/users/me [patch]
 func (h *AuthHandler) UpdateProfile(c echo.Context) error {
 	var req UpdateProfileRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
-	userID := GetUserID(c)
+	userID := middleware.GetUserID(c)
 
 	// Convert DTO to model
 	input := model.ProfileInput{
@@ -373,10 +363,10 @@ func (h *AuthHandler) UpdateProfile(c echo.Context) error {
 
 	profile, err := h.svc.Profile.UpdateProfile(c.Request().Context(), userID, input)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, profile)
+	return c.JSON(http.StatusOK, ProfileEnvelope{Data: profile})
 }
 
 // CheckUsername godoc
@@ -385,21 +375,21 @@ func (h *AuthHandler) UpdateProfile(c echo.Context) error {
 // @Tags         auth
 // @Produce      json
 // @Param        username query string true "Username to check"
-// @Success      200 {object} map[string]bool
-// @Failure      400 {object} ErrorResponse "missing parameter"
+// @Success      200 {object} UsernameCheckEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "missing parameter"
 // @Router       /auth/check-username [get]
 func (h *AuthHandler) CheckUsername(c echo.Context) error {
 	username := c.QueryParam("username")
 	if username == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "username query parameter is required"})
+		return apiresponse.Reject(c, http.StatusBadRequest, "missing_parameter", "A username is required.")
 	}
 
 	available, err := h.svc.Profile.CheckUsernameAvailable(c.Request().Context(), username)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]bool{"available": available})
+	return c.JSON(http.StatusOK, UsernameCheckEnvelope{Data: UsernameCheck{Available: available}})
 }
 
 // DeleteProfile godoc
@@ -408,16 +398,15 @@ func (h *AuthHandler) CheckUsername(c echo.Context) error {
 // @Tags         users
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200 {object} map[string]string
-// @Failure      401 {object} ErrorResponse "unauthorized"
+// @Success      204 "No Content"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "unauthorized"
 // @Router       /v1/users/me [delete]
 func (h *AuthHandler) DeleteProfile(c echo.Context) error {
-	userID := GetUserID(c)
-	err := h.svc.Profile.DeleteProfile(c.Request().Context(), userID)
-	if err != nil {
-		return h.handleError(c, err)
+	userID := middleware.GetUserID(c)
+	if err := h.svc.Profile.DeleteProfile(c.Request().Context(), userID); err != nil {
+		return httperr.Fail(c, err)
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": "profile deleted successfully"})
+	return c.NoContent(http.StatusNoContent)
 }
 
 // AcceptInvite godoc
@@ -427,15 +416,15 @@ func (h *AuthHandler) DeleteProfile(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body AcceptInviteRequest true "Invite details"
-// @Success      200 {object} TokenPairResponse
-// @Failure      400 {object} ErrorResponse "invalid body"
-// @Failure      401 {object} ErrorResponse "invalid token"
-// @Failure      409 {object} ErrorResponse "username already claimed"
+// @Success      200 {object} TokenPairEnvelope
+// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
+// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid token"
+// @Failure      409 {object} apiresponse.ErrorEnvelope "username already claimed"
 // @Router       /auth/accept-invite [post]
 func (h *AuthHandler) AcceptInvite(c echo.Context) error {
 	var req AcceptInviteRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
+		return httperr.InvalidBody(c)
 	}
 
 	profileInput := model.ProfileInput{}
@@ -445,48 +434,8 @@ func (h *AuthHandler) AcceptInvite(c echo.Context) error {
 
 	tokens, err := h.svc.Signup.AcceptInvite(c.Request().Context(), req.Token, req.Password, profileInput)
 	if err != nil {
-		return h.handleError(c, err)
+		return httperr.Fail(c, err)
 	}
 
-	return c.JSON(http.StatusOK, TokenPairResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-	})
-}
-
-// handleError maps domain errors to standard HTTP status codes.
-func (h *AuthHandler) handleError(c echo.Context, err error) error {
-	switch {
-	case errors.Is(err, autherr.ErrEmailAlreadyRegistered), errors.Is(err, autherr.ErrUsernameTaken):
-		return c.JSON(http.StatusConflict, ErrorResponse{Error: err.Error()})
-
-	case errors.Is(err, autherr.ErrInvalidCredentials), errors.Is(err, autherr.ErrOTPIncorrect),
-		errors.Is(err, autherr.ErrOTPExpired), errors.Is(err, autherr.ErrRefreshTokenInvalid),
-		errors.Is(err, token.ErrInvalidToken):
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-
-	case errors.Is(err, autherr.ErrAccountSuspended), errors.Is(err, autherr.ErrAccountDeactivated):
-		return c.JSON(http.StatusForbidden, ErrorResponse{Error: err.Error()})
-
-	case errors.Is(err, autherr.ErrOTPMaxAttempts), errors.Is(err, autherr.ErrOTPCooldown):
-		return c.JSON(http.StatusTooManyRequests, ErrorResponse{Error: err.Error()})
-
-	case errors.Is(err, autherr.ErrEmailNotVerified), errors.Is(err, autherr.ErrRefreshTokenReused),
-		errors.Is(err, autherr.ErrOTPNotFound), errors.Is(err, autherr.ErrInvitationNotFound),
-		errors.Is(err, autherr.ErrInvitationExpired), errors.Is(err, autherr.ErrInvitationAlreadyAccepted),
-		errors.Is(err, autherr.ErrOAuthAccount), errors.Is(err, autherr.ErrOAuthProviderNotSupported),
-		errors.Is(err, autherr.ErrOAuthTokenInvalid), errors.Is(err, autherr.ErrPasswordLoginDisabled),
-		errors.Is(err, autherr.ErrRegistrationDisabled):
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-
-	case errors.Is(err, autherr.ErrPasswordTooShort), errors.Is(err, autherr.ErrPasswordTooLong),
-		errors.Is(err, autherr.ErrPasswordSame), errors.Is(err, autherr.ErrInvalidAvatarURL),
-		errors.Is(err, autherr.ErrInvalidEmail), errors.Is(err, autherr.ErrInvalidUsername),
-		errors.Is(err, autherr.ErrInvalidProfileName):
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
-
-	default:
-		// We could log unexpected errors here.
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "internal server error"})
-	}
+	return c.JSON(http.StatusOK, tokenPair(tokens.AccessToken, tokens.RefreshToken))
 }
