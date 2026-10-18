@@ -23,6 +23,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service"
+	"server/internal/auth/service/oauth"
 	"server/internal/auth/token"
 	"server/internal/platform/config"
 	db "server/internal/platform/db/generated"
@@ -122,7 +123,38 @@ func main() {
 	}
 
 	// Initialize Auth Config.
-	authCfg := authconfig.DefaultConfig()
+	authCfg := authconfig.AuthConfig{
+		Registration: authconfig.RegistrationConfig{
+			Mode:                       authconfig.RegistrationModeOpen,
+			EnablePasswordRegistration: true,
+			EnableOAuthRegistration:    false,
+		},
+		Verification: authconfig.VerificationConfig{
+			Required:       true,
+			OTPTTL:         10 * time.Minute,
+			MaxOTPAttempts: 5,
+			ResendCooldown: 60 * time.Second,
+		},
+		Session: authconfig.SessionConfig{
+			AccessTokenTTL:     15 * time.Minute,
+			RefreshTokenTTL:    30 * 24 * time.Hour,
+			RotateRefreshToken: true,
+		},
+		Password: authconfig.PasswordConfig{
+			EnablePasswordLogin: true,
+			MinLength:           8,
+			BcryptCost:          13,
+		},
+		Profile: authconfig.ProfileConfig{
+			EnableName:        true,
+			EnableUsername:    false,
+			EnableDisplayName: true,
+		},
+		OAuth: authconfig.OAuthConfig{
+			Enabled:   false,
+			Providers: make(map[string]oauth.Provider),
+		},
+	}
 	if err := authCfg.Validate(); err != nil {
 		slog.Error("Invalid auth configuration", "error", err)
 		os.Exit(1)
