@@ -9,7 +9,7 @@ import (
 
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"

@@ -2,7 +2,7 @@
 
 # Where sqlc/swag write generated code — kept as vars so a path change
 # only needs updating in one place.
-SQLC_OUT   := internal/db/generated
+SQLC_OUT   := internal/platform/db/generated
 DOCS_OUT   := docs
 BINARY_OUT := bin/api
 MAIN_PKG   := ./cmd/api
@@ -58,12 +58,12 @@ vet: generate goimports
 # still needs a human read), but it will catch one that's missing
 # entirely or misnamed.
 #
-# internal/db/generated is excluded: it's sqlc output, never hand-
+# internal/platform/db/generated is excluded: it's sqlc output, never hand-
 # edited, and `sqlc generate` wipes any doc comment added to satisfy
 # the linter on the next run anyway — flagging it produces noise with
 # no fix that survives regeneration.
 staticcheck: vet
-	staticcheck $$(go list ./... | grep -v /internal/db/generated)
+	staticcheck $$(go list ./... | grep -v /internal/platform/db/generated)
 
 lint: staticcheck
 

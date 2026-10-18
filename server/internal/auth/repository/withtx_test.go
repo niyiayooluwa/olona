@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // fakeTx is a test double that satisfies pgx.Tx. Only the lifecycle methods the

@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // fakeQuerier is a test double that satisfies db.Querier.

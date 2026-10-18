@@ -24,10 +24,10 @@ import (
 	"server/internal/auth/repository"
 	"server/internal/auth/service"
 	"server/internal/auth/utils"
-	"server/internal/config"
-	db "server/internal/db/generated"
-	"server/internal/httpserver"
-	"server/internal/mailer"
+	"server/internal/platform/config"
+	db "server/internal/platform/db/generated"
+	"server/internal/platform/httpserver"
+	"server/internal/platform/mailer"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

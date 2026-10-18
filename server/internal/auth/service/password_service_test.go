@@ -13,7 +13,7 @@ import (
 	autherr "server/internal/auth/errors"
 	"server/internal/auth/repository"
 	"server/internal/auth/utils"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 func TestPasswordService_ForgotPassword(t *testing.T) {

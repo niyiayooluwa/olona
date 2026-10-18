@@ -16,7 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // AuthRepository defines the persistence contract for all authentication operations.

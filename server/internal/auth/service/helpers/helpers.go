@@ -17,7 +17,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/utils"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // IssueTokenPair generates a signed HS256 access token and a cryptographic CSPRNG refresh token.

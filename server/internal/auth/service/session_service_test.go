@@ -14,7 +14,7 @@ import (
 	autherr "server/internal/auth/errors"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/oauth"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 func TestSessionService_Login(t *testing.T) {

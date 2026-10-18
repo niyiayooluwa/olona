@@ -12,7 +12,7 @@ import (
 	autherr "server/internal/auth/errors"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 func TestProfileService_GetProfile(t *testing.T) {

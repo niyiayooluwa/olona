@@ -11,7 +11,7 @@ import (
 
 	autherr "server/internal/auth/errors"
 	"server/internal/auth/repository"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // These tests pin the transaction boundary on the OTP *issue* paths —

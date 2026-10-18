@@ -12,7 +12,7 @@ import (
 	"server/internal/auth/repository"
 	"server/internal/auth/service/oauth"
 	"server/internal/auth/utils"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // mockAuthRepository is a test double that satisfies repository.AuthRepository.

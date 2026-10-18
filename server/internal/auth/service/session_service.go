@@ -11,7 +11,7 @@ import (
 	"server/internal/auth/repository"
 	"server/internal/auth/service/helpers"
 	"server/internal/auth/utils"
-	db "server/internal/db/generated"
+	db "server/internal/platform/db/generated"
 )
 
 // SessionService handles authentication, session renewal, token revocation, and OAuth logins.
