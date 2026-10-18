@@ -1,5 +1,28 @@
 basePath: /
 definitions:
+  apiresponse.ErrorBody:
+    properties:
+      code:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/apiresponse.FieldError'
+        type: array
+      message:
+        type: string
+    type: object
+  apiresponse.ErrorEnvelope:
+    properties:
+      error:
+        $ref: '#/definitions/apiresponse.ErrorBody'
+    type: object
+  apiresponse.FieldError:
+    properties:
+      code:
+        type: string
+      field:
+        type: string
+    type: object
   handler.AcceptInviteRequest:
     properties:
       password:
@@ -14,11 +37,6 @@ definitions:
       new_password:
         type: string
       old_password:
-        type: string
-    type: object
-  handler.ErrorResponse:
-    properties:
-      error:
         type: string
     type: object
   handler.ForgotPasswordRequest:
@@ -37,6 +55,11 @@ definitions:
     properties:
       refresh_token:
         type: string
+    type: object
+  handler.ProfileEnvelope:
+    properties:
+      data:
+        $ref: '#/definitions/model.UserProfile'
     type: object
   handler.RefreshRequest:
     properties:
@@ -57,6 +80,18 @@ definitions:
       new_password:
         type: string
     type: object
+  handler.SignupData:
+    properties:
+      tokens:
+        $ref: '#/definitions/handler.TokenPairResponse'
+      verification_required:
+        type: boolean
+    type: object
+  handler.SignupEnvelope:
+    properties:
+      data:
+        $ref: '#/definitions/handler.SignupData'
+    type: object
   handler.SignupRequest:
     properties:
       email:
@@ -66,10 +101,10 @@ definitions:
       username:
         type: string
     type: object
-  handler.SignupResponse:
+  handler.TokenPairEnvelope:
     properties:
-      message:
-        type: string
+      data:
+        $ref: '#/definitions/handler.TokenPairResponse'
     type: object
   handler.TokenPairResponse:
     properties:
@@ -89,6 +124,16 @@ definitions:
       last_name:
         type: string
     type: object
+  handler.UsernameCheck:
+    properties:
+      available:
+        type: boolean
+    type: object
+  handler.UsernameCheckEnvelope:
+    properties:
+      data:
+        $ref: '#/definitions/handler.UsernameCheck'
+    type: object
   handler.VerifyRequest:
     properties:
       code:
@@ -98,19 +143,19 @@ definitions:
     type: object
   model.UserProfile:
     properties:
-      avatarURL:
+      avatar_url:
         type: string
-      displayName:
+      display_name:
         type: string
       email:
         type: string
-      firstName:
+      first_name:
         type: string
       id:
         type: string
-      isVerified:
+      is_verified:
         type: boolean
-      lastName:
+      last_name:
         type: string
       username:
         type: string
@@ -140,19 +185,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.TokenPairResponse'
+            $ref: '#/definitions/handler.TokenPairEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: invalid token
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "409":
           description: username already claimed
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Accept invitation
       tags:
       - auth
@@ -171,13 +216,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: boolean
-            type: object
+            $ref: '#/definitions/handler.UsernameCheckEnvelope'
         "400":
           description: missing parameter
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Check username availability
       tags:
       - auth
@@ -185,7 +228,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sends a password reset OTP to the email if it exists.
+      description: |-
+        Sends a password reset OTP to the email if it exists. Always
+        answers 204, whether or not the address has an account, so the
+        endpoint cannot be used to enumerate registered emails.
       parameters:
       - description: Email address
         in: body
@@ -196,16 +242,12 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+        "204":
+          description: No Content
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Request password reset
       tags:
       - auth
@@ -227,15 +269,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.TokenPairResponse'
+            $ref: '#/definitions/handler.TokenPairEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: invalid credentials
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Login to account
       tags:
       - auth
@@ -259,7 +301,7 @@ paths:
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Logout
       tags:
       - auth
@@ -281,15 +323,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.TokenPairResponse'
+            $ref: '#/definitions/handler.TokenPairEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: invalid or expired token
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Refresh token pair
       tags:
       - auth
@@ -308,20 +350,16 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+        "204":
+          description: No Content
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "429":
           description: cooldown active
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Resend verification OTP
       tags:
       - auth
@@ -340,20 +378,16 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+        "204":
+          description: No Content
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: invalid or expired OTP
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Reset password
       tags:
       - auth
@@ -385,31 +419,31 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handler.SignupResponse'
+            $ref: '#/definitions/handler.SignupEnvelope'
         "202":
           description: duplicate email, masked as success
           schema:
-            $ref: '#/definitions/handler.SignupResponse'
+            $ref: '#/definitions/handler.SignupEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: registration disabled
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "409":
           description: username already taken
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "429":
           description: too many requests
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "500":
           description: internal error
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Create a new account
       tags:
       - auth
@@ -432,23 +466,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.TokenPairResponse'
+            $ref: '#/definitions/handler.TokenPairEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: invalid or expired OTP
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "429":
           description: too many attempts
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "500":
           description: internal error
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       summary: Confirm signup OTP and activate the account
       tags:
       - auth
@@ -458,16 +492,12 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+        "204":
+          description: No Content
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       security:
       - BearerAuth: []
       summary: Delete profile
@@ -481,11 +511,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.UserProfile'
+            $ref: '#/definitions/handler.ProfileEnvelope'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -508,19 +538,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.UserProfile'
+            $ref: '#/definitions/handler.ProfileEnvelope'
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "409":
           description: username already claimed
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       security:
       - BearerAuth: []
       summary: Update user profile
@@ -541,20 +571,16 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+        "204":
+          description: No Content
         "400":
           description: invalid body
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/handler.ErrorResponse'
+            $ref: '#/definitions/apiresponse.ErrorEnvelope'
       security:
       - BearerAuth: []
       summary: Change password
