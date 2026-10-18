@@ -8,8 +8,8 @@ import (
 	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/service"
-	"server/internal/auth/service/helpers"
 	"server/internal/auth/token"
+	"server/internal/auth/validate"
 
 	"github.com/labstack/echo/v4"
 )
@@ -54,7 +54,7 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		return h.handleError(c, err)
 	}
 
@@ -109,7 +109,7 @@ func (h *AuthHandler) Verify(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		return h.handleError(c, err)
 	}
 
@@ -141,7 +141,7 @@ func (h *AuthHandler) ResendOTP(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		return h.handleError(c, err)
 	}
 
@@ -170,7 +170,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		// Do not return ErrInvalidEmail directly to avoid enumeration, use InvalidCredentials
 		return h.handleError(c, autherr.ErrInvalidCredentials)
 	}
@@ -254,7 +254,7 @@ func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		// Do not leak whether the email is invalid vs not found
 		return c.JSON(http.StatusOK, map[string]string{"message": "if the email exists, a reset code was sent"})
 	}
@@ -284,7 +284,7 @@ func (h *AuthHandler) ResetPassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid body"})
 	}
 
-	if err := helpers.ValidateEmail(req.Email); err != nil {
+	if err := validate.ValidateEmail(req.Email); err != nil {
 		return h.handleError(c, err)
 	}
 

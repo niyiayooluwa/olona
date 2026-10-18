@@ -10,8 +10,8 @@ import (
 	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/service/helpers"
 	"server/internal/auth/token"
+	"server/internal/auth/validate"
 )
 
 // InvitationService manages issuing, inspecting, and revoking organization and team invitations.
@@ -43,7 +43,7 @@ func NewInvitationService(
 // - email: The recipient's email address.
 func (service *InvitationService) Invite(ctx context.Context, invitedBy uuid.UUID, email string) error {
 	// 1. Normalize invitee email address
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 2. Generate secure 32-byte CSPRNG token and deterministic SHA-256 hash
 	rawToken, tokenHash, err := token.GenerateRandomToken()

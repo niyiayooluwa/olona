@@ -7,13 +7,13 @@ import (
 
 	"github.com/google/uuid"
 
-	"server/internal/auth/config"
 	"server/internal/auth/autherr"
+	"server/internal/auth/config"
+	"server/internal/auth/hashing"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/service/helpers"
-		"server/internal/auth/hashing"
 	"server/internal/auth/token"
+	"server/internal/auth/validate"
 )
 
 // PasswordService handles password reset requests, reset confirmations, and password changes.
@@ -53,7 +53,7 @@ func NewPasswordService(
 // Returns ErrOTPCooldown if a code was requested too recently.
 func (service *PasswordService) ForgotPassword(ctx context.Context, email string) error {
 	// 1. Normalize email address (lowercase and trim whitespace)
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 2. Look up user by email; return nil silently on ErrNotFound to mitigate account enumeration
 	user, err := service.repo.GetUserByEmail(ctx, normalizedEmail)
@@ -153,11 +153,11 @@ func (service *PasswordService) ForgotPassword(ctx context.Context, email string
 // - ErrAccountSuspended / ErrAccountDeactivated if account is locked.
 func (service *PasswordService) ResetPassword(ctx context.Context, email, code, newPassword string) error {
 	// 1. Validate password policy constraints
-	if err := helpers.ValidatePassword(newPassword, service.config.Password.MinLength); err != nil {
+	if err := validate.ValidatePassword(newPassword, service.config.Password.MinLength); err != nil {
 		return err
 	}
 
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 2. Fetch target user
 	user, err := service.repo.GetUserByEmail(ctx, normalizedEmail)
@@ -266,7 +266,7 @@ func (service *PasswordService) ResetPassword(ctx context.Context, email, code, 
 // - ErrPasswordSame if newPassword is identical to oldPassword.
 func (service *PasswordService) ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
 	// 1. Validate new password length constraints
-	if err := helpers.ValidatePassword(newPassword, service.config.Password.MinLength); err != nil {
+	if err := validate.ValidatePassword(newPassword, service.config.Password.MinLength); err != nil {
 		return err
 	}
 

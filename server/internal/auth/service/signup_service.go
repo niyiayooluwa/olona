@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
-	"server/internal/auth/config"
 	"server/internal/auth/autherr"
+	"server/internal/auth/config"
+	"server/internal/auth/hashing"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/service/helpers"
-		"server/internal/auth/hashing"
 	"server/internal/auth/token"
+	"server/internal/auth/validate"
 	db "server/internal/platform/db/generated"
 )
 
@@ -73,16 +73,16 @@ func (service *SignupService) Signup(
 	}
 
 	// 2. Validate password requirements
-	if err := helpers.ValidatePassword(password, service.config.Password.MinLength); err != nil {
+	if err := validate.ValidatePassword(password, service.config.Password.MinLength); err != nil {
 		return nil, err
 	}
 
 	// 3. Normalize email address (lowercase and trim whitespace)
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 4. Validate unique username if username profile feature is enabled
 	if service.config.Profile.EnableUsername && profileInput.Username != nil && *profileInput.Username != "" {
-		if err := helpers.ValidateUsername(*profileInput.Username); err != nil {
+		if err := validate.ValidateUsername(*profileInput.Username); err != nil {
 			return nil, err
 		}
 		exists, err := service.repo.CheckUsernameExists(ctx, *profileInput.Username)
@@ -103,7 +103,7 @@ func (service *SignupService) Signup(
 	// 6. Reject a non-http(s) avatar before the transaction opens. Validating
 	// here rather than at the repository means a bad value never reaches the
 	// database.
-	if err := helpers.ValidateAvatarURL(profileInput.AvatarURL); err != nil {
+	if err := validate.ValidateAvatarURL(profileInput.AvatarURL); err != nil {
 		return nil, err
 	}
 	avatarURL := profileInput.AvatarURL
@@ -115,13 +115,13 @@ func (service *SignupService) Signup(
 	var firstName, lastName, username, displayName *string
 	if service.config.Profile.EnableName {
 		if profileInput.FirstName != nil {
-			if err := helpers.ValidateProfileName(*profileInput.FirstName); err != nil {
+			if err := validate.ValidateProfileName(*profileInput.FirstName); err != nil {
 				return nil, err
 			}
 			firstName = profileInput.FirstName
 		}
 		if profileInput.LastName != nil {
-			if err := helpers.ValidateProfileName(*profileInput.LastName); err != nil {
+			if err := validate.ValidateProfileName(*profileInput.LastName); err != nil {
 				return nil, err
 			}
 			lastName = profileInput.LastName
@@ -132,7 +132,7 @@ func (service *SignupService) Signup(
 	}
 	if service.config.Profile.EnableDisplayName {
 		if profileInput.DisplayName != nil {
-			if err := helpers.ValidateProfileName(*profileInput.DisplayName); err != nil {
+			if err := validate.ValidateProfileName(*profileInput.DisplayName); err != nil {
 				return nil, err
 			}
 			displayName = profileInput.DisplayName
@@ -173,7 +173,7 @@ func (service *SignupService) Signup(
 		if err := txRepo.MarkEmailVerified(ctx, user.ID); err != nil {
 			return err
 		}
-		tokens, err = helpers.IssueTokenPair(ctx, txRepo, service.jwtIssuer, service.config.Session, user.ID)
+		tokens, err = issueTokenPair(ctx, txRepo, service.jwtIssuer, service.config.Session, user.ID)
 		return err
 	})
 
@@ -215,7 +215,7 @@ func (service *SignupService) Signup(
 // - (nil, ErrOTPIncorrect): The provided code is invalid (increments failed attempt count).
 func (service *SignupService) VerifyEmail(ctx context.Context, email, code string) (*model.TokenPair, error) {
 	// 1. Normalize email address
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 2. Fetch user by email
 	user, err := service.repo.GetUserByEmail(ctx, normalizedEmail)
@@ -282,7 +282,7 @@ func (service *SignupService) VerifyEmail(ctx context.Context, email, code strin
 	}
 
 	// 8. Issue active session token pair (access token + refresh token)
-	return helpers.IssueTokenPair(ctx, service.repo, service.jwtIssuer, service.config.Session, user.ID)
+	return issueTokenPair(ctx, service.repo, service.jwtIssuer, service.config.Session, user.ID)
 }
 
 // ResendOTP generates and dispatches a fresh verification code subject to cooldown limits.
@@ -298,7 +298,7 @@ func (service *SignupService) VerifyEmail(ctx context.Context, email, code strin
 // - ErrOTPCooldown: A verification code was already requested within the cooldown window.
 func (service *SignupService) ResendOTP(ctx context.Context, email string) error {
 	// 1. Normalize email address
-	normalizedEmail := helpers.NormalizeEmail(email)
+	normalizedEmail := validate.NormalizeEmail(email)
 
 	// 2. Fetch user by email. Only a genuine "no such user" is swallowed, to
 	// mitigate account enumeration (AUTH-16 style). Any other error is a real
@@ -481,7 +481,7 @@ func (service *SignupService) AcceptInvite(
 		}
 		// Same avatar scheme check as the signup path, applied before the
 		// transaction opens so a rejected value costs no work.
-		if err := helpers.ValidateAvatarURL(profileInput.AvatarURL); err != nil {
+		if err := validate.ValidateAvatarURL(profileInput.AvatarURL); err != nil {
 			return err
 		}
 		avatarURL = profileInput.AvatarURL
@@ -498,5 +498,5 @@ func (service *SignupService) AcceptInvite(
 	}
 
 	// 11. Issue active session token pair (access + refresh)
-	return helpers.IssueTokenPair(ctx, service.repo, service.jwtIssuer, service.config.Session, user.ID)
+	return issueTokenPair(ctx, service.repo, service.jwtIssuer, service.config.Session, user.ID)
 }

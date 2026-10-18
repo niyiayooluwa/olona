@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"server/internal/auth/config"
 	"server/internal/auth/autherr"
+	"server/internal/auth/config"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/token"

@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 
-	"server/internal/auth/config"
 	"server/internal/auth/autherr"
+	"server/internal/auth/config"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/oauth"
 	db "server/internal/platform/db/generated"
