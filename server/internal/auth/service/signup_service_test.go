@@ -13,7 +13,7 @@ import (
 	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -191,7 +191,7 @@ func TestSignupService_VerifyEmail(t *testing.T) {
 		testUserID := uuid.New()
 		testOTPID := uuid.New()
 		rawCode := "123456"
-		codeHash := utils.HashToken(rawCode)
+		codeHash := token.HashToken(rawCode)
 
 		mockRepo.GetUserByEmailFn = func(ctx context.Context, email string) (db.User, error) {
 			return db.User{ID: testUserID, Email: email}, nil
@@ -310,7 +310,7 @@ func TestSignupService_VerifyEmail(t *testing.T) {
 			return db.OtpCode{
 				ID:       testOTPID,
 				UserID:   testUserID,
-				CodeHash: utils.HashToken("654321"),
+				CodeHash: token.HashToken("654321"),
 				Attempts: 1,
 			}, nil
 		}

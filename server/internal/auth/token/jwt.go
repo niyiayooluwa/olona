@@ -1,5 +1,6 @@
-// Package utils provides cryptographic and security helpers for authentication.
-package utils
+// Package token issues and validates the auth domain's tokens: signed JWTs,
+// opaque refresh tokens, and numeric OTPs.
+package token
 
 import (
 	"errors"

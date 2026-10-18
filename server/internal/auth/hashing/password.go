@@ -1,4 +1,6 @@
-package utils
+// Package hashing derives and verifies password hashes using bcrypt, and
+// provides the constant-cost dummy comparison used on the user-not-found path.
+package hashing
 
 import (
 	"fmt"

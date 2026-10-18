@@ -10,7 +10,7 @@ import (
 
 	"server/internal/auth/autherr"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -32,7 +32,7 @@ func TestVerifyEmailRunsTheOTPFlowInOneTransaction(t *testing.T) {
 		mockRepo := &mockAuthRepository{}
 		userID := uuid.New()
 		rawCode := "123456"
-		codeHash := utils.HashToken(rawCode)
+		codeHash := token.HashToken(rawCode)
 
 		mockRepo.GetUserByEmailFn = func(ctx context.Context, email string) (db.User, error) {
 			return db.User{ID: userID, Email: email}, nil
@@ -153,7 +153,7 @@ func TestResetPasswordRunsTheOTPFlowInOneTransaction(t *testing.T) {
 			return db.OtpCode{
 				ID:       uuid.New(),
 				UserID:   id,
-				CodeHash: utils.HashToken(rawCode),
+				CodeHash: token.HashToken(rawCode),
 				Purpose:  "password_reset",
 				Attempts: 0,
 			}, nil

@@ -10,7 +10,7 @@ import (
 
 	"server/internal/auth/autherr"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -145,7 +145,7 @@ func TestInvitationService_GetInvitation(t *testing.T) {
 		}
 
 		invitationService := NewInvitationService(mockRepo, nil)
-		_, err := invitationService.GetInvitation(ctx, utils.HashToken("expired-token"))
+		_, err := invitationService.GetInvitation(ctx, token.HashToken("expired-token"))
 		if !errors.Is(err, autherr.ErrInvitationExpired) {
 			t.Fatalf("expected ErrInvitationExpired, got %v", err)
 		}

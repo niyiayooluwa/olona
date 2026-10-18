@@ -23,7 +23,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	"server/internal/platform/config"
 	db "server/internal/platform/db/generated"
 	"server/internal/platform/httpserver"
@@ -87,7 +87,7 @@ func main() {
 	// bytes by this point; there is deliberately no fallback value, because a
 	// known signing key lets an attacker mint a valid token for any user ID
 	// without touching the database.
-	jwtIssuer := utils.NewJWTIssuer(cfg.JWTSecret)
+	jwtIssuer := token.NewJWTIssuer(cfg.JWTSecret)
 
 	// Initialize Mailer.
 	//

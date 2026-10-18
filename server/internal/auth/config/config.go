@@ -114,7 +114,7 @@ func DefaultConfig() AuthConfig {
 // is caught at startup instead of on the first login attempt.
 //
 // Call this once while wiring the application, before serving traffic. The
-// alternative — letting utils.HashPassword reject the bad value — converts a
+// alternative — letting hashing.HashPassword reject the bad value — converts a
 // config typo into a total auth outage, because login is the one endpoint that
 // must never be unavailable, and it fails precisely when someone is attacking
 // it.

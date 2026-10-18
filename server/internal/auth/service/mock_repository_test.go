@@ -11,7 +11,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/oauth"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -382,8 +382,8 @@ func (mock *mockOAuthProvider) VerifyToken(ctx context.Context, idToken string) 
 var _ oauth.Provider = (*mockOAuthProvider)(nil)
 
 // helper to setup a test JWTIssuer
-func setupTestJWTIssuer() *utils.JWTIssuer {
-	return utils.NewJWTIssuer("test-super-secret-key-32-chars-long!")
+func setupTestJWTIssuer() *token.JWTIssuer {
+	return token.NewJWTIssuer("test-super-secret-key-32-chars-long!")
 }
 
 // helper to setup default AuthConfig

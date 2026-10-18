@@ -9,7 +9,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/service"
 	"server/internal/auth/service/helpers"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 
 	"github.com/labstack/echo/v4"
 )
@@ -462,7 +462,7 @@ func (h *AuthHandler) handleError(c echo.Context, err error) error {
 
 	case errors.Is(err, autherr.ErrInvalidCredentials), errors.Is(err, autherr.ErrOTPIncorrect),
 		errors.Is(err, autherr.ErrOTPExpired), errors.Is(err, autherr.ErrRefreshTokenInvalid),
-		errors.Is(err, utils.ErrInvalidToken):
+		errors.Is(err, token.ErrInvalidToken):
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
 
 	case errors.Is(err, autherr.ErrAccountSuspended), errors.Is(err, autherr.ErrAccountDeactivated):

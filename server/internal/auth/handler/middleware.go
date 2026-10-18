@@ -6,7 +6,7 @@ import (
 
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -15,7 +15,7 @@ import (
 // RequireAuth is a middleware that enforces JWT authentication for protected routes.
 // It extracts the token from the Authorization header, validates it using the JWTIssuer,
 // and injects the user_id into the Echo context.
-func RequireAuth(issuer *utils.JWTIssuer) echo.MiddlewareFunc {
+func RequireAuth(issuer *token.JWTIssuer) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")

@@ -11,7 +11,7 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/helpers"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 )
 
 // InvitationService manages issuing, inspecting, and revoking organization and team invitations.
@@ -46,7 +46,7 @@ func (service *InvitationService) Invite(ctx context.Context, invitedBy uuid.UUI
 	normalizedEmail := helpers.NormalizeEmail(email)
 
 	// 2. Generate secure 32-byte CSPRNG token and deterministic SHA-256 hash
-	rawToken, tokenHash, err := utils.GenerateRandomToken()
+	rawToken, tokenHash, err := token.GenerateRandomToken()
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (service *InvitationService) Invite(ctx context.Context, invitedBy uuid.UUI
 // - ErrInvitationExpired if the invite lifetime has elapsed.
 func (service *InvitationService) GetInvitation(ctx context.Context, rawToken string) (*model.InvitationDetails, error) {
 	// 1. Compute SHA-256 hash of presented raw invite token
-	tokenHash := utils.HashToken(rawToken)
+	tokenHash := token.HashToken(rawToken)
 
 	// 2. Query repository for matching invitation
 	invitation, err := service.repo.GetInvitationByToken(ctx, tokenHash)

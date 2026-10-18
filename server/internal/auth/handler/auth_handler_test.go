@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"server/internal/auth/autherr"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 
 	"github.com/labstack/echo/v4"
 )
@@ -74,7 +74,7 @@ func TestHandleErrorMapsEverySentinel(t *testing.T) {
 		{"oauth token invalid", autherr.ErrOAuthTokenInvalid, http.StatusUnauthorized},
 		{"password login disabled", autherr.ErrPasswordLoginDisabled, http.StatusUnauthorized},
 		{"registration disabled", autherr.ErrRegistrationDisabled, http.StatusUnauthorized},
-		{"jwt invalid", utils.ErrInvalidToken, http.StatusUnauthorized},
+		{"jwt invalid", token.ErrInvalidToken, http.StatusUnauthorized},
 
 		// 400 — the request is wrong and the client can correct it.
 		{"password too short", autherr.ErrPasswordTooShort, http.StatusBadRequest},

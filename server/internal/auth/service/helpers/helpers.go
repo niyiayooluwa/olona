@@ -16,7 +16,7 @@ import (
 	"server/internal/auth/autherr"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -25,7 +25,7 @@ import (
 func IssueTokenPair(
 	ctx context.Context,
 	repo repository.AuthRepository,
-	jwtIssuer *utils.JWTIssuer,
+	jwtIssuer *token.JWTIssuer,
 	sessionConfig config.SessionConfig,
 	userID uuid.UUID,
 ) (*model.TokenPair, error) {
@@ -36,7 +36,7 @@ func IssueTokenPair(
 	}
 
 	// 2. Generate secure 32-byte CSPRNG refresh token and compute its SHA-256 hash
-	rawRefreshToken, tokenHash, err := utils.GenerateRandomToken()
+	rawRefreshToken, tokenHash, err := token.GenerateRandomToken()
 	if err != nil {
 		return nil, err
 	}

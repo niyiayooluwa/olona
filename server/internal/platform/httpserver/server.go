@@ -11,7 +11,7 @@ import (
 
 	"server/internal/auth/handler"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 
 	_ "server/docs"
 
@@ -40,7 +40,7 @@ type Handlers struct {
 func NewRouter(
 	h Handlers,
 	repo repository.AuthRepository,
-	jwtIssuer *utils.JWTIssuer,
+	jwtIssuer *token.JWTIssuer,
 	allowedOrigins,
 	trustedProxyCIDRs []string,
 	authRateLimitPerMinute int,

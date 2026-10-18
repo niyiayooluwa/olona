@@ -10,7 +10,8 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/helpers"
-	"server/internal/auth/utils"
+		"server/internal/auth/hashing"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -18,7 +19,7 @@ import (
 type SignupService struct {
 	repo      repository.AuthRepository
 	config    config.AuthConfig
-	jwtIssuer *utils.JWTIssuer
+	jwtIssuer *token.JWTIssuer
 	mailer    model.Mailer
 }
 
@@ -26,7 +27,7 @@ type SignupService struct {
 func NewSignupService(
 	repo repository.AuthRepository,
 	cfg config.AuthConfig,
-	jwtIssuer *utils.JWTIssuer,
+	jwtIssuer *token.JWTIssuer,
 	mailer model.Mailer,
 ) *SignupService {
 	return &SignupService{
@@ -94,7 +95,7 @@ func (service *SignupService) Signup(
 	}
 
 	// 5. Hash password with configured bcrypt work factor
-	hashedPassword, err := utils.HashPassword(password, service.config.Password.BcryptCost)
+	hashedPassword, err := hashing.HashPassword(password, service.config.Password.BcryptCost)
 	if err != nil {
 		return nil, err
 	}
@@ -153,12 +154,12 @@ func (service *SignupService) Signup(
 
 		// If email verification is required, issue OTP
 		if service.config.Verification.Required {
-			generatedOTP, err = utils.GenerateOTP()
+			generatedOTP, err = token.GenerateOTP()
 			if err != nil {
 				return err
 			}
 
-			otpHash := utils.HashToken(generatedOTP)
+			otpHash := token.HashToken(generatedOTP)
 			expiresAt := time.Now().Add(service.config.Verification.OTPTTL)
 
 			_, err = txRepo.CreateOTP(ctx, user.ID, otpHash, "signup_verify", expiresAt)
@@ -255,7 +256,7 @@ func (service *SignupService) VerifyEmail(ctx context.Context, email, code strin
 		}
 
 		// Verify submitted OTP hash against database record
-		if utils.HashToken(code) != otpRecord.CodeHash {
+		if token.HashToken(code) != otpRecord.CodeHash {
 			if _, err := txRepo.IncrementOTPAttempts(ctx, otpRecord.ID); err != nil {
 				return err
 			}
@@ -332,11 +333,11 @@ func (service *SignupService) ResendOTP(ctx context.Context, email string) error
 	// The code is generated before the transaction opens because it is pure
 	// computation with no database access; that keeps the lock held for the
 	// shortest possible window.
-	newCode, err := utils.GenerateOTP()
+	newCode, err := token.GenerateOTP()
 	if err != nil {
 		return err
 	}
-	newHash := utils.HashToken(newCode)
+	newHash := token.HashToken(newCode)
 	expiresAt := time.Now().Add(service.config.Verification.OTPTTL)
 
 	// The outcome is captured rather than returned from fn: a cooldown
@@ -405,7 +406,7 @@ func (service *SignupService) AcceptInvite(
 	profileInput model.ProfileInput,
 ) (*model.TokenPair, error) {
 	// 1. Hash raw token with SHA-256
-	tokenHash := utils.HashToken(rawToken)
+	tokenHash := token.HashToken(rawToken)
 
 	// 2. Look up invitation record
 	invitation, err := service.repo.GetInvitationByToken(ctx, tokenHash)
@@ -446,7 +447,7 @@ func (service *SignupService) AcceptInvite(
 	}
 
 	// 7. Hash password using bcrypt with configured cost
-	hashedPassword, err := utils.HashPassword(password, service.config.Password.BcryptCost)
+	hashedPassword, err := hashing.HashPassword(password, service.config.Password.BcryptCost)
 	if err != nil {
 		return nil, err
 	}

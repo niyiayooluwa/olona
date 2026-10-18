@@ -10,7 +10,8 @@ import (
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
 	"server/internal/auth/service/helpers"
-	"server/internal/auth/utils"
+		"server/internal/auth/hashing"
+	"server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 )
 
@@ -18,14 +19,14 @@ import (
 type SessionService struct {
 	repo      repository.AuthRepository
 	config    config.AuthConfig
-	jwtIssuer *utils.JWTIssuer
+	jwtIssuer *token.JWTIssuer
 }
 
 // NewSessionService constructs a new SessionService.
 func NewSessionService(
 	repo repository.AuthRepository,
 	cfg config.AuthConfig,
-	jwtIssuer *utils.JWTIssuer,
+	jwtIssuer *token.JWTIssuer,
 ) *SessionService {
 	return &SessionService{
 		repo:      repo,
@@ -69,7 +70,7 @@ func (service *SessionService) Login(ctx context.Context, email, password string
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			// Side-channel defense: perform dummy bcrypt check to equalize timing profile
-			utils.DummyPasswordCompare(password)
+			hashing.DummyPasswordCompare(password)
 			return nil, autherr.ErrInvalidCredentials
 		}
 		return nil, err
@@ -77,12 +78,12 @@ func (service *SessionService) Login(ctx context.Context, email, password string
 
 	// 4. Reject accounts created via third-party OAuth providers that lack a password credential
 	if !user.PasswordHash.Valid {
-		utils.DummyPasswordCompare(password)
+		hashing.DummyPasswordCompare(password)
 		return nil, autherr.ErrOAuthAccount
 	}
 
 	// 5. Verify submitted password against stored bcrypt hash using constant-time check
-	if !utils.CheckPassword(user.PasswordHash.String, password) {
+	if !hashing.CheckPassword(user.PasswordHash.String, password) {
 		return nil, autherr.ErrInvalidCredentials
 	}
 
@@ -122,7 +123,7 @@ func (service *SessionService) Login(ctx context.Context, email, password string
 // - (nil, ErrAccountSuspended / ErrAccountDeactivated): Account is locked.
 func (service *SessionService) Refresh(ctx context.Context, rawRefreshToken string) (*model.TokenPair, error) {
 	// 1. Compute SHA-256 hash of presented raw refresh token
-	tokenHash := utils.HashToken(rawRefreshToken)
+	tokenHash := token.HashToken(rawRefreshToken)
 
 	// 2. Fetch token record from repository
 	tokenRecord, err := service.repo.GetRefreshToken(ctx, tokenHash)
@@ -189,7 +190,7 @@ func (service *SessionService) Refresh(ctx context.Context, rawRefreshToken stri
 // - Idempotent: returns nil without error if the token was already revoked or not found.
 func (service *SessionService) Logout(ctx context.Context, rawRefreshToken string) error {
 	// 1. Hash raw refresh token with SHA-256
-	tokenHash := utils.HashToken(rawRefreshToken)
+	tokenHash := token.HashToken(rawRefreshToken)
 
 	// 2. Look up token record
 	tokenRecord, err := service.repo.GetRefreshToken(ctx, tokenHash)

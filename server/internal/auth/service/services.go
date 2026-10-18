@@ -5,7 +5,7 @@ import (
 	"server/internal/auth/config"
 	"server/internal/auth/model"
 	"server/internal/auth/repository"
-	"server/internal/auth/utils"
+	"server/internal/auth/token"
 )
 
 // Services encapsulates all individual auth domain services.
@@ -22,7 +22,7 @@ type Services struct {
 func NewServices(
 	repo repository.AuthRepository,
 	cfg config.AuthConfig,
-	jwtIssuer *utils.JWTIssuer,
+	jwtIssuer *token.JWTIssuer,
 	mailer model.Mailer,
 ) *Services {
 	return &Services{
