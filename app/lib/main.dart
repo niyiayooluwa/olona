@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:olona/core/routing/router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'core/theme/app_theme.dart';
 
@@ -67,7 +68,7 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final router = ref.watch(appRouterProvider);
+    final router = ref.watch(routerProvider);
 
     return ShadApp.router(
       title: 'Olona',
@@ -82,7 +83,7 @@ class MainApp extends ConsumerWidget {
       //===================================
       // ROUTING
       //===================================
-      // routerConfig: router,
+      routerConfig: router,
 
       //===================================
       // SYSTEM UI CONFIG

@@ -1,12 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:olona/core/presentation/app_shell.dart';
 import 'package:olona/core/storage/secure_storage.dart';
+import 'package:olona/features/auth/screens/register/register_screen.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 
 // I guess this is pretty clear from the signature...
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+/// Lets you browse the authenticated shell before login is implemented.
+/// `kDebugMode` is false in release builds, so this can never ship enabled.
+const bool _previewAppShell = true;
 
 // 💪 BOOM!!!! Riverpod just generated all the boilerplate
 // so you dont have to. You're welcome 💅
@@ -16,12 +23,15 @@ GoRouter router(Ref ref) {
     navigatorKey: navigatorKey,
     // Initial location is always splash due to a useEffect trigger that was
     // defined there which works in tandem with our redirect logic
-    initialLocation: '/splash',
+    initialLocation: '/register',
 
     // Le redirect logic
     redirect: (context, state) async {
+      // Local preview of the app shell. Remove this once login works.
+      if (kDebugMode && _previewAppShell) return null;
+
       // 1. Splash screen handles initial routing itself
-      if (state.uri.path == '/splash') return null;
+      if (state.uri.path == '/register') return null;
 
       // This fetches the storage service instance and gets the access token from
       // there and puts it in the token variable basically... Easy peasy
@@ -53,7 +63,7 @@ GoRouter router(Ref ref) {
       // If users is not logged in, and user is not on a public route, kick them to
       // the get started screen
       if (!isLoggedIn && !isAuthRoute) {
-        return '/get-started';
+        return '/register';
       }
 
       // We check the value of isLoggedIn and check if there is a user saved in state
@@ -76,14 +86,17 @@ GoRouter router(Ref ref) {
     },
 
     routes: [
-      GoRoute(
-        path: '/',
-        name: 'home',
-        builder: (context, state) {
-          return const Scaffold(
-            body: Center(child: Text('Welcome to Olona')),
-          );
-        },
+      // Auth shell — no navigation chrome.
+      ShellRoute(
+        builder: (context, state, child) =>
+            AppShell(isAuth: true, child: child),
+        routes: [
+          GoRoute(
+            path: '/register',
+            name: 'register',
+            builder: (context, state) => const RegisterScreen(),
+          ),
+        ],
       ),
     ],
   );
