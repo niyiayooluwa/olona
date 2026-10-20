@@ -78,7 +78,7 @@ class MainApp extends ConsumerWidget {
       // THEME INJECTION
       //===================================
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      //darkTheme: AppTheme.dark(),
 
       //===================================
       // ROUTING

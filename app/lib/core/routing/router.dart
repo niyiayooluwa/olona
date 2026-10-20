@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:olona/core/presentation/app_shell.dart';
 import 'package:olona/core/storage/secure_storage.dart';
-import 'package:olona/features/auth/screens/register/register_screen.dart';
+import 'package:olona/features/auth/ui/register/register_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
@@ -86,17 +86,10 @@ GoRouter router(Ref ref) {
     },
 
     routes: [
-      // Auth shell — no navigation chrome.
-      ShellRoute(
-        builder: (context, state, child) =>
-            AppShell(isAuth: true, child: child),
-        routes: [
-          GoRoute(
-            path: '/register',
-            name: 'register',
-            builder: (context, state) => const RegisterScreen(),
-          ),
-        ],
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
       ),
     ],
   );
