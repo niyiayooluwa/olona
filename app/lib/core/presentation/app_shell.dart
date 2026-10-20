@@ -1,40 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:olona/core/constants/constants.dart';
 import 'package:olona/core/presentation/window_size.dart';
 
 class AppShell extends StatelessWidget {
-  const AppShell({
-    super.key,
-    required this.child,
-    this.location = '',
-    this.isAuth = false,
-  });
+  const AppShell({super.key, required this.child, this.location = ''});
 
   final Widget child;
 
   /// Current router location, e.g. `/sales`. Drives the selected nav item.
   final String location;
 
-  final bool isAuth;
-
   @override
   Widget build(BuildContext context) {
-    if (isAuth) {
-      return Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: child,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     final size = windowSizeFor(MediaQuery.sizeOf(context).width);
     final selectedIndex = _indexOf(location);
 
@@ -159,7 +137,12 @@ class _Sidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            padding: const EdgeInsets.fromLTRB(
+              UIConstants.md,
+              UIConstants.lg,
+              UIConstants.md,
+              UIConstants.lg,
+            ),
             child: Text(
               'Olona',
               style: Theme.of(
@@ -169,7 +152,10 @@ class _Sidebar extends StatelessWidget {
           ),
           for (var i = 0; i < _destinations.length; i++)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: UIConstants.sm,
+                vertical: 2,
+              ),
               child: ListTile(
                 leading: Icon(_destinations[i].icon),
                 title: Text(_destinations[i].label),

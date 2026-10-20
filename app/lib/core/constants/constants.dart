@@ -10,4 +10,22 @@ class ApiConstants {
   static const Duration receiveTimeout = Duration(seconds: 12);
 }
 
-class UiConstants {}
+/* Spacing scale (dp)
+//  static const double xs = 4;
+//  static const double sm = 8;
+//  static const double md = 16;
+//  static const double lg = 24;
+//  static const double xl = 32;
+//  static const double xxl = 48;
+*/
+class UIConstants {
+  const UIConstants._();
+
+  // Spacing scale (dp)
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 32;
+  static const double xxl = 48;
+}

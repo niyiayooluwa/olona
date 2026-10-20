@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:olona/core/constants/constants.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -18,14 +19,17 @@ class EmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        padding: const EdgeInsets.symmetric(
+          horizontal: UIConstants.lg,
+          vertical: UIConstants.xxl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 40, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(height: 16),
+            const SizedBox(height: UIConstants.md),
             Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
+            const SizedBox(height: UIConstants.sm),
             Text(
               message,
               textAlign: TextAlign.center,

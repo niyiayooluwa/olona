@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:olona/core/constants/constants.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'color_scheme.dart';
 
@@ -13,7 +14,7 @@ class AppTheme {
       // BASE COLORS & BORDERS
       //===================================
       colorScheme: const AppColorScheme.light(),
-      radius: BorderRadius.circular(12),
+      // radius: BorderRadius.circular(UIConstants.lg),
 
       //===================================
       // TYPOGRAPHY
@@ -25,22 +26,30 @@ class AppTheme {
       //===================================
       primaryButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       secondaryButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       destructiveButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       outlineButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       buttonSizesTheme: const ShadButtonSizesTheme(
@@ -69,19 +78,23 @@ class AppTheme {
       inputTheme: const ShadInputTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
           focusedBorder: ShadBorder(
-            radius: BorderRadius.all(Radius.circular(26)),
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
           ),
           errorBorder: ShadBorder(
-            radius: BorderRadius.all(Radius.circular(26)),
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
           ),
         ),
       ),
       selectTheme: const ShadSelectTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
 
@@ -108,7 +121,7 @@ class AppTheme {
       // BASE COLORS & BORDERS
       //===================================
       colorScheme: const AppColorScheme.dark(),
-      radius: BorderRadius.circular(12),
+      // radius: BorderRadius.circular(UIConstants.lg),
 
       //===================================
       // TYPOGRAPHY
@@ -120,22 +133,30 @@ class AppTheme {
       //===================================
       primaryButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       secondaryButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       destructiveButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       outlineButtonTheme: const ShadButtonTheme(
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
       buttonSizesTheme: const ShadButtonSizesTheme(
@@ -164,19 +185,23 @@ class AppTheme {
       inputTheme: const ShadInputTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
           focusedBorder: ShadBorder(
-            radius: BorderRadius.all(Radius.circular(26)),
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
           ),
           errorBorder: ShadBorder(
-            radius: BorderRadius.all(Radius.circular(26)),
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
           ),
         ),
       ),
       selectTheme: const ShadSelectTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: ShadDecoration(
-          border: ShadBorder(radius: BorderRadius.all(Radius.circular(26))),
+          border: ShadBorder(
+            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
+          ),
         ),
       ),
 
