@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:olona/core/constants/constants.dart';
+// import 'package:olona/core/constants/constants.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'color_scheme.dart';
 
