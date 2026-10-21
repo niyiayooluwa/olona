@@ -1,6 +1,6 @@
 # Olona
 
-Flutter client for Olona, a personal inventory & ledger platform.
+Flutter client for Olona, a SaaS inventory & ledger platform designed for organizations with distributed sales teams and hierarchical oversight.
 
 The app talks to the `server/` Go backend in this monorepo. See the repository
 root for the backend, migrations, and API docs.
