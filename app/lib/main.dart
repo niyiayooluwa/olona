@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:olona/core/routing/router.dart';
+import 'package:olona/core/theme/app_theme.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'core/theme/app_theme.dart';
 
 // Not yet enabled — re-add these alongside the initialization block below
 // when Hive and Firebase are switched on. Leaving them imported while unused
