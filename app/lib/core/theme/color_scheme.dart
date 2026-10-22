@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-
+/*
 @immutable
 class AppColorScheme extends ShadColorScheme {
   //===================================
@@ -80,6 +80,81 @@ class AppColorScheme extends ShadColorScheme {
     super.border = const Color(0xff27272a),
     super.input = const Color(0xff27272a),
     super.ring = const Color(0xff15803d),
+    super.selection = const Color(0xFF355172),
+    super.custom,
+  });
+}*/
+
+@immutable
+class Neutral extends ShadColorScheme {
+  const Neutral({
+    super.background = const Color(0xffffffff),
+    super.foreground = const Color(0xff020817),
+    super.card = const Color(0xffffffff),
+    super.cardForeground = const Color(0xff020817),
+    super.popover = const Color(0xffffffff),
+    super.popoverForeground = const Color(0xff020817),
+    super.primary = const Color(0xff0f172a),
+    super.primaryForeground = const Color(0xfff8fafc),
+    super.secondary = const Color(0xfff1f5f9),
+    super.secondaryForeground = const Color(0xff0f172a),
+    super.muted = const Color(0xfff1f5f9),
+    super.mutedForeground = const Color(0xff64748b),
+    super.accent = const Color(0xfff1f5f9),
+    super.accentForeground = const Color(0xff0f172a),
+    super.destructive = const Color(0xffef4444),
+    super.destructiveForeground = const Color(0xfff8fafc),
+    super.border = const Color(0xffe2e8f0),
+    super.input = const Color(0xffe2e8f0),
+    super.ring = const Color(0xff020817),
+    super.selection = const Color(0xFFB4D7FF),
+    super.custom,
+  });
+
+  const Neutral.light({
+    super.background = const Color(0xffffffff),
+    super.foreground = const Color(0xff030712),
+    super.card = const Color(0xffffffff),
+    super.cardForeground = const Color(0xff030712),
+    super.popover = const Color(0xffffffff),
+    super.popoverForeground = const Color(0xff030712),
+    super.primary = const Color(0xff111827),
+    super.primaryForeground = const Color(0xfff9fafb),
+    super.secondary = const Color(0xfff3f4f6),
+    super.secondaryForeground = const Color(0xff111827),
+    super.muted = const Color(0xfff3f4f6),
+    super.mutedForeground = const Color(0xff6b7280),
+    super.accent = const Color(0xfff3f4f6),
+    super.accentForeground = const Color(0xff111827),
+    super.destructive = const Color(0xffef4444),
+    super.destructiveForeground = const Color(0xfff9fafb),
+    super.border = const Color(0xffe5e7eb),
+    super.input = const Color(0xffe5e7eb),
+    super.ring = const Color(0xff030712),
+    super.selection = const Color(0xFFB4D7FF),
+    super.custom,
+  });
+
+  const Neutral.dark({
+    super.background = const Color(0xff030712),
+    super.foreground = const Color(0xfff9fafb),
+    super.card = const Color(0xff030712),
+    super.cardForeground = const Color(0xfff9fafb),
+    super.popover = const Color(0xff030712),
+    super.popoverForeground = const Color(0xfff9fafb),
+    super.primary = const Color(0xfff9fafb),
+    super.primaryForeground = const Color(0xff111827),
+    super.secondary = const Color(0xff1f2937),
+    super.secondaryForeground = const Color(0xfff9fafb),
+    super.muted = const Color(0xff1f2937),
+    super.mutedForeground = const Color(0xff9ca3af),
+    super.accent = const Color(0xff1f2937),
+    super.accentForeground = const Color(0xfff9fafb),
+    super.destructive = const Color(0xffef4444),
+    super.destructiveForeground = const Color(0xfff9fafb),
+    super.border = const Color(0xff1f2937),
+    super.input = const Color(0xff1f2937),
+    super.ring = const Color(0xffd1d5db),
     super.selection = const Color(0xFF355172),
     super.custom,
   });

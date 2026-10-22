@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:olona/core/presentation/app_shell.dart';
 import 'package:olona/core/storage/secure_storage.dart';
 import 'package:olona/features/auth/ui/register/register_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

@@ -13,7 +13,7 @@ class AppTheme {
       //===================================
       // BASE COLORS & BORDERS
       //===================================
-      colorScheme: const AppColorScheme.light(),
+      colorScheme: const Neutral.light(),
       // radius: BorderRadius.circular(UIConstants.lg),
 
       //===================================
@@ -120,7 +120,7 @@ class AppTheme {
       //===================================
       // BASE COLORS & BORDERS
       //===================================
-      colorScheme: const AppColorScheme.dark(),
+      colorScheme: const Neutral.dark(),
       // radius: BorderRadius.circular(UIConstants.lg),
 
       //===================================
