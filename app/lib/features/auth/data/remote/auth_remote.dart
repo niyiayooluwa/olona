@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:olona/core/errors/error_mapper.dart';
 import 'package:olona/core/network/dio_client.dart';
+import 'package:olona/features/auth/data/models/login.dart';
 import 'package:olona/features/auth/data/models/register.dart';
 import 'package:olona/features/auth/data/models/verify.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -26,6 +27,17 @@ class AuthRemote {
     }
   }
 
+  Future<Either<Failure, LoginResponse>> login(LoginRequest request) async {
+    try {
+      final response = await _dio.post('/auth/login', data: request.toJson());
+      return Right(LoginResponse.fromJson(response.data));
+    } on DioException catch (e) {
+      return Left(mapDioException(e));
+    } catch (e) {
+      return Left(mapException(e));
+    }
+  }
+
   Future<Either<Failure, VerifyResponse>> verifyOtp(
     VerifyRequest request,
   ) async {
@@ -39,9 +51,7 @@ class AuthRemote {
     }
   }
 
-  Future<Either<Failure, void>> resendOtp(
-    ResendOtpRequest request,
-  ) async {
+  Future<Either<Failure, void>> resendOtp(ResendOtpRequest request) async {
     try {
       await _dio.post('/auth/resend-otp', data: request.toJson());
       return const Right(null);

@@ -1,6 +1,7 @@
 import 'package:dart_either/dart_either.dart';
 import 'package:olona/core/errors/error_mapper.dart';
 import 'package:olona/core/storage/secure_storage.dart';
+import 'package:olona/features/auth/data/models/login.dart';
 import 'package:olona/features/auth/data/models/register.dart';
 import 'package:olona/features/auth/data/models/verify.dart';
 import 'package:olona/features/auth/data/remote/auth_remote.dart';
@@ -21,6 +22,21 @@ class AuthRepository {
     return await _remote.signup(request);
   }
 
+  Future<Either<Failure, LoginResponse>> login(LoginRequest request) async {
+    final result = await _remote.login(request);
+
+    return result.fold(
+      ifLeft: (failure) => Left(failure),
+      ifRight: (response) async {
+        await _storage.saveTokens(
+          accessToken: response.data.accessToken,
+          refreshToken: response.data.refreshToken,
+        );
+        return Right(response);
+      },
+    );
+  }
+
   Future<Either<Failure, VerifyResponse>> verifyOtp(
     VerifyRequest request,
   ) async {
@@ -38,9 +54,7 @@ class AuthRepository {
     );
   }
 
-  Future<Either<Failure, void>> resendOtp(
-    ResendOtpRequest request,
-  ) async {
+  Future<Either<Failure, void>> resendOtp(ResendOtpRequest request) async {
     return await _remote.resendOtp(request);
   }
 }
