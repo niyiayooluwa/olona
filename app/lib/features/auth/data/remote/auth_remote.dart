@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dart_either/dart_either.dart';
 import 'package:olona/core/errors/error_mapper.dart';
 import 'package:olona/core/network/dio_client.dart';
+import 'package:olona/features/auth/data/models/forgot_password.dart';
 import 'package:olona/features/auth/data/models/login.dart';
 import 'package:olona/features/auth/data/models/register.dart';
 import 'package:olona/features/auth/data/models/verify.dart';
@@ -55,6 +56,32 @@ class AuthRemote {
     try {
       await _dio.post('/auth/resend-otp', data: request.toJson());
       return const Right(null);
+    } on DioException catch (e) {
+      return Left(mapDioException(e));
+    } catch (e) {
+      return Left(mapException(e));
+    }
+  }
+
+  Future<Either<Failure, void>> forgotPassword(
+    ForgotPasswordRequest request,
+  ) async {
+    try {
+      await _dio.post('/auth/forgot-password', data: request.toJson());
+      return Right(null);
+    } on DioException catch (e) {
+      return Left(mapDioException(e));
+    } catch (e) {
+      return Left(mapException(e));
+    }
+  }
+
+  Future<Either<Failure, void>> resetPassword(
+    ResetPasswordRequest request,
+  ) async {
+    try {
+      await _dio.post('/auth/reset-password', data: request.toJson());
+      return Right(null);
     } on DioException catch (e) {
       return Left(mapDioException(e));
     } catch (e) {

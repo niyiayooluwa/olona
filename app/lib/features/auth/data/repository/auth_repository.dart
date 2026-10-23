@@ -1,6 +1,7 @@
 import 'package:dart_either/dart_either.dart';
 import 'package:olona/core/errors/error_mapper.dart';
 import 'package:olona/core/storage/secure_storage.dart';
+import 'package:olona/features/auth/data/models/forgot_password.dart';
 import 'package:olona/features/auth/data/models/login.dart';
 import 'package:olona/features/auth/data/models/register.dart';
 import 'package:olona/features/auth/data/models/verify.dart';
@@ -56,6 +57,18 @@ class AuthRepository {
 
   Future<Either<Failure, void>> resendOtp(ResendOtpRequest request) async {
     return await _remote.resendOtp(request);
+  }
+
+  Future<Either<Failure, void>> forgotPassword(
+    ForgotPasswordRequest request,
+  ) async {
+    return await _remote.forgotPassword(request);
+  }
+
+  Future<Either<Failure, void>> resetPassword(
+    ResetPasswordRequest request,
+  ) async {
+    return await _remote.resetPassword(request);
   }
 }
 
