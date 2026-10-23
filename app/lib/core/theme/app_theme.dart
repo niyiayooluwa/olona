@@ -77,17 +77,6 @@ class AppTheme {
       //===================================
       inputTheme: const ShadInputTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: ShadDecoration(
-          border: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-          focusedBorder: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-          errorBorder: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-        ),
       ),
       selectTheme: const ShadSelectTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -184,17 +173,6 @@ class AppTheme {
       //===================================
       inputTheme: const ShadInputTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: ShadDecoration(
-          border: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-          focusedBorder: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-          errorBorder: ShadBorder(
-            // radius: BorderRadius.all(Radius.circular(UIConstants.lg)),
-          ),
-        ),
       ),
       selectTheme: const ShadSelectTheme(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
