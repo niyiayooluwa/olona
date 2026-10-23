@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:olona/core/errors/error_mapper.dart';
+import 'package:olona/core/errors/app_error_view.dart';
 import 'app_toast.dart';
 import 'toast_manager.dart';
 
 export 'app_toast.dart';
 export 'toast_manager.dart';
 
-/// Extension methods on [BuildContext] to show clean, standardized app toasts.
+/// Clean extension methods on [BuildContext] to display app toasts.
 extension AppToastContextExtension on BuildContext {
   /// Show a general toast notification.
   void showAppToast({
@@ -68,7 +68,7 @@ extension AppToastContextExtension on BuildContext {
     );
   }
 
-  /// Show an error toast notification with optional retry and dismiss actions.
+  /// Show an error toast notification with optional primary/secondary actions.
   void showErrorToast({
     required String title,
     String? description,
@@ -110,101 +110,11 @@ extension AppToastContextExtension on BuildContext {
     Object error, {
     VoidCallback? onRetry,
   }) {
-    final (title, description) = _mapErrorToUxCopy(error);
+    final errorView = AppErrorView.from(error);
     showErrorToast(
-      title: title,
-      description: description,
+      title: errorView.title,
+      description: errorView.description,
       onRetry: onRetry,
-    );
-  }
-
-  (String title, String description) _mapErrorToUxCopy(Object error) {
-    if (error is Failure) {
-      switch (error.code) {
-        case 'email_already_registered':
-          return (
-            'Email already registered',
-            'An account with this email address already exists. Try signing in instead.',
-          );
-        case 'username_taken':
-          return (
-            'Username is taken',
-            'This organization handle or username is already in use. Please choose another.',
-          );
-        case 'invalid_credentials':
-          return (
-            'Invalid credentials',
-            'The email or password you entered is incorrect. Please check and try again.',
-          );
-        case 'otp_incorrect':
-          return (
-            'Incorrect verification code',
-            'The code you entered does not match. Please verify and try again.',
-          );
-        case 'otp_expired':
-          return (
-            'Verification code expired',
-            'This code has expired. Please request a new code to continue.',
-          );
-        case 'otp_max_attempts':
-          return (
-            'Too many failed attempts',
-            'You have exceeded the maximum number of attempts. Please request a new code.',
-          );
-        case 'otp_cooldown':
-          return (
-            'Please wait a moment',
-            'You requested a code recently. Please wait a short while before requesting another.',
-          );
-        case 'rate_limited':
-          return (
-            'Too many requests',
-            'You are making requests too quickly. Please pause a moment and try again.',
-          );
-        case 'network':
-          return (
-            'Connection issue',
-            'Unable to connect to the server. Please check your internet connection.',
-          );
-        case 'timeout':
-          return (
-            'Request timed out',
-            'The server is taking too long to respond. Please check your connection and retry.',
-          );
-        case 'validation_failed':
-          final detailMsg = error.details != null && error.details!.isNotEmpty
-              ? error.details!.map((d) => '${d.field}: ${d.code}').join(', ')
-              : null;
-          return (
-            'Check your details',
-            detailMsg ?? error.message,
-          );
-        case 'account_suspended':
-          return (
-            'Account suspended',
-            'Your account has been suspended. Please contact your organization administrator.',
-          );
-        case 'account_deactivated':
-          return (
-            'Account deactivated',
-            'This account has been deactivated.',
-          );
-        case 'internal_error':
-          return (
-            'Server error',
-            'Our service encountered an unexpected problem. We are looking into it.',
-          );
-        default:
-          return (
-            'Something went wrong',
-            error.message.isNotEmpty ? error.message : 'Please try again.',
-          );
-      }
-    }
-
-    return (
-      'Something went wrong',
-      'We couldn’t complete your request. Check your connection and try again.',
     );
   }
 }
