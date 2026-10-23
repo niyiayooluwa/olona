@@ -11,46 +11,43 @@ class AuthResponsiveLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = ShadTheme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: scheme.background,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.lg,
-                      vertical: UIConstants.lg,
-                    ),
-                    child: Column(
-                      children: [
-                        const Spacer(),
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.lg,
+                    vertical: UIConstants.lg,
+                  ),
+                  child: Column(
+                    children: [
+                      const Spacer(),
 
-                        // Form sitting directly on background (Constrained to 400px)
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 400),
-                            child: child,
-                          ),
+                      // Form sitting directly on background (Constrained to 400px)
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: child,
                         ),
+                      ),
 
-                        const Spacer(),
+                      const Spacer(),
 
-                        // Global Footer pinned cleanly to the bottom
-                        _buildFooter(scheme),
-                      ],
-                    ),
+                      // Global Footer pinned cleanly to the bottom
+                      _buildFooter(scheme),
+                    ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

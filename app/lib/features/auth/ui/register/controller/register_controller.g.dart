@@ -9,6 +9,59 @@ part of 'register_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(RegisteredEmail)
+const registeredEmailProvider = RegisteredEmailProvider._();
+
+final class RegisteredEmailProvider
+    extends $NotifierProvider<RegisteredEmail, String> {
+  const RegisteredEmailProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'registeredEmailProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$registeredEmailHash();
+
+  @$internal
+  @override
+  RegisteredEmail create() => RegisteredEmail();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$registeredEmailHash() => r'b12dfabbf9c1d4a5dc8b088ab11bece2c8a775d9';
+
+abstract class _$RegisteredEmail extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 @ProviderFor(RegisterController)
 const registerControllerProvider = RegisterControllerProvider._();
 
@@ -34,7 +87,7 @@ final class RegisterControllerProvider
 }
 
 String _$registerControllerHash() =>
-    r'cfb89ebb9a6697f8d20bcbffe161af0c4d375f79';
+    r'128298b4e77b85ed12e3d4e69f426466b38fc087';
 
 abstract class _$RegisterController extends $AsyncNotifier<void> {
   FutureOr<void> build();

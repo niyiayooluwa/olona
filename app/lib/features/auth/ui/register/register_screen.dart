@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:olona/core/constants/constants.dart';
+import 'package:olona/core/presentation/toast/toast_extensions.dart';
 import 'package:olona/features/auth/shared/presentation/auth_layout.dart';
 import 'package:olona/features/auth/ui/register/controller/register_controller.dart';
 import 'package:olona/features/auth/ui/register/widgets/register_form.dart';
@@ -17,17 +18,16 @@ class RegisterScreen extends HookConsumerWidget {
     ref.listen<AsyncValue<void>>(registerControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, _) {
-          // Show error toast using Shadcn UI or SnackBar
-          ShadToaster.of(context).show(
-            ShadToast.destructive(
-              title: const Text('Registration Failed'),
-              description: Text(error.toString()),
-            ),
-          );
+          context.showFailureToast(error);
         },
         data: (_) {
           // Success! Navigate forward
-          context.go('/verify-email');
+          final email = ref.read(registeredEmailProvider);
+          context.showSuccessToast(
+            title: 'Account Created',
+            description: 'Please check your email for the verification code.',
+          );
+          context.goNamed('verify', extra: email);
         },
       );
     });

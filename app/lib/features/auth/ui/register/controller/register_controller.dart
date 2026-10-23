@@ -4,6 +4,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'register_controller.g.dart';
 
+@Riverpod(keepAlive: true)
+class RegisteredEmail extends _$RegisteredEmail {
+  @override
+  String build() => '';
+
+  void setEmail(String email) => state = email;
+}
+
 @riverpod
 class RegisterController extends _$RegisterController {
   @override
@@ -27,7 +35,10 @@ class RegisterController extends _$RegisterController {
       ifLeft: (failure) => AsyncValue.error(failure, StackTrace.current),
       // We do not fetch user here since signup doesn't log them in automatically
       // (usually requires OTP verification first based on swagger)
-      ifRight: (response) => const AsyncValue.data(null),
+      ifRight: (response) {
+        ref.read(registeredEmailProvider.notifier).setEmail(email);
+        return const AsyncValue.data(null);
+      },
     );
   }
 }
