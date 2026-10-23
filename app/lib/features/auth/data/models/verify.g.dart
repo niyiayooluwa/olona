@@ -22,3 +22,9 @@ _VerifyResponse _$VerifyResponseFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$VerifyResponseToJson(_VerifyResponse instance) =>
     <String, dynamic>{'data': instance.data};
+
+_ResendOtpRequest _$ResendOtpRequestFromJson(Map<String, dynamic> json) =>
+    _ResendOtpRequest(email: json['email'] as String);
+
+Map<String, dynamic> _$ResendOtpRequestToJson(_ResendOtpRequest instance) =>
+    <String, dynamic>{'email': instance.email};

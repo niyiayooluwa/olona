@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:olona/core/storage/secure_storage.dart';
 import 'package:olona/features/auth/ui/register/register_screen.dart';
+import 'package:olona/features/auth/ui/verify/verify_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
@@ -89,6 +90,18 @@ GoRouter router(Ref ref) {
         path: '/register',
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+
+      GoRoute(
+        path: '/verify',
+        name: 'verify',
+        builder: (context, state) {
+          final email =
+              (state.extra as String?) ??
+              state.uri.queryParameters['email'] ??
+              '';
+          return VerifyScreen(email: email);
+        },
       ),
     ],
   );

@@ -38,6 +38,19 @@ class AuthRemote {
       return Left(mapException(e));
     }
   }
+
+  Future<Either<Failure, void>> resendOtp(
+    ResendOtpRequest request,
+  ) async {
+    try {
+      await _dio.post('/auth/resend-otp', data: request.toJson());
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(mapDioException(e));
+    } catch (e) {
+      return Left(mapException(e));
+    }
+  }
 }
 
 @riverpod

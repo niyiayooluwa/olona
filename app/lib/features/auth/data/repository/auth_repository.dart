@@ -18,7 +18,7 @@ class AuthRepository {
     RegisterRequest request,
   ) async {
     // No tokens to save on signup (requires OTP verification first)
-    return _remote.signup(request);
+    return await _remote.signup(request);
   }
 
   Future<Either<Failure, VerifyResponse>> verifyOtp(
@@ -36,6 +36,12 @@ class AuthRepository {
         return Right(response);
       },
     );
+  }
+
+  Future<Either<Failure, void>> resendOtp(
+    ResendOtpRequest request,
+  ) async {
+    return await _remote.resendOtp(request);
   }
 }
 

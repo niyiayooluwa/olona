@@ -20,3 +20,11 @@ abstract class VerifyResponse with _$VerifyResponse {
   factory VerifyResponse.fromJson(Map<String, dynamic> json) =>
       _$VerifyResponseFromJson(json);
 }
+
+@freezed
+abstract class ResendOtpRequest with _$ResendOtpRequest {
+  const factory ResendOtpRequest({required String email}) = _ResendOtpRequest;
+
+  factory ResendOtpRequest.fromJson(Map<String, dynamic> json) =>
+      _$ResendOtpRequestFromJson(json);
+}

@@ -15,6 +15,9 @@ class Failure {
   final String message;
   final int? statusCode;
   final List<FieldError>? details;
+
+  @override
+  String toString() => message;
 }
 
 Failure mapDioException(DioException e) {
