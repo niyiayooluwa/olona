@@ -57,7 +57,7 @@ class VerifyScreen extends HookConsumerWidget {
             description: 'Your account has been verified successfully.',
           );
           // Navigate to setup or home route
-          context.go('/set-username');
+          context.goNamed('/set-username');
         },
       );
     });

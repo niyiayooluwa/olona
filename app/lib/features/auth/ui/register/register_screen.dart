@@ -92,7 +92,7 @@ class RegisterScreen extends HookConsumerWidget {
                 ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
-                    context.replace('/login');
+                    context.replaceNamed('login');
                   },
               ),
             ],
