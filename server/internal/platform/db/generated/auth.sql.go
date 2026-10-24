@@ -26,43 +26,6 @@ func (q *Queries) CheckUsernameExists(ctx context.Context, username pgtype.Text)
 	return exists, err
 }
 
-const createInvitation = `-- name: CreateInvitation :one
-
-INSERT INTO invitations (email, token_hash, invited_by, expires_at)
-VALUES ($1, $2, $3, $4)
-RETURNING id, email, token_hash, invited_by, expires_at, accepted_at, created_at
-`
-
-type CreateInvitationParams struct {
-	Email     string    `json:"email"`
-	TokenHash string    `json:"token_hash"`
-	InvitedBy uuid.UUID `json:"invited_by"`
-	ExpiresAt time.Time `json:"expires_at"`
-}
-
-// ===================================
-// INVITATIONS
-// ===================================
-func (q *Queries) CreateInvitation(ctx context.Context, arg CreateInvitationParams) (Invitation, error) {
-	row := q.db.QueryRow(ctx, createInvitation,
-		arg.Email,
-		arg.TokenHash,
-		arg.InvitedBy,
-		arg.ExpiresAt,
-	)
-	var i Invitation
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.TokenHash,
-		&i.InvitedBy,
-		&i.ExpiresAt,
-		&i.AcceptedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const createOAuthConnection = `-- name: CreateOAuthConnection :one
 INSERT INTO oauth_connections (user_id, provider, provider_user_id)
 VALUES ($1, $2, $3)
@@ -139,7 +102,7 @@ INSERT INTO profiles (
   avatar_url
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at, staff_role
+RETURNING id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at
 `
 
 type CreateProfileParams struct {
@@ -177,7 +140,6 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (P
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.StaffRole,
 	)
 	return i, err
 }
@@ -217,7 +179,7 @@ const createUser = `-- name: CreateUser :one
 
 INSERT INTO users (email, password_hash)
 VALUES ($1, $2)
-RETURNING id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at, role
+RETURNING id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -240,7 +202,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.IsDeactivated,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Role,
 	)
 	return i, err
 }
@@ -253,16 +214,6 @@ WHERE id = $1
 
 func (q *Queries) DeactivateUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deactivateUser, id)
-	return err
-}
-
-const deleteInvitation = `-- name: DeleteInvitation :exec
-DELETE FROM invitations
-WHERE id = $1
-`
-
-func (q *Queries) DeleteInvitation(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteInvitation, id)
 	return err
 }
 
@@ -321,46 +272,6 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getInvitationByID = `-- name: GetInvitationByID :one
-SELECT id, email, token_hash, invited_by, expires_at, accepted_at, created_at FROM invitations
-WHERE id = $1
-`
-
-func (q *Queries) GetInvitationByID(ctx context.Context, id uuid.UUID) (Invitation, error) {
-	row := q.db.QueryRow(ctx, getInvitationByID, id)
-	var i Invitation
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.TokenHash,
-		&i.InvitedBy,
-		&i.ExpiresAt,
-		&i.AcceptedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getInvitationByToken = `-- name: GetInvitationByToken :one
-SELECT id, email, token_hash, invited_by, expires_at, accepted_at, created_at FROM invitations
-WHERE token_hash = $1 AND accepted_at IS NULL AND expires_at > now()
-`
-
-func (q *Queries) GetInvitationByToken(ctx context.Context, tokenHash string) (Invitation, error) {
-	row := q.db.QueryRow(ctx, getInvitationByToken, tokenHash)
-	var i Invitation
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.TokenHash,
-		&i.InvitedBy,
-		&i.ExpiresAt,
-		&i.AcceptedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getOAuthConnection = `-- name: GetOAuthConnection :one
 
 SELECT id, user_id, provider, provider_user_id, created_at, updated_at FROM oauth_connections
@@ -415,7 +326,7 @@ func (q *Queries) GetOAuthProvidersForUser(ctx context.Context, userID uuid.UUID
 }
 
 const getProfileByUserID = `-- name: GetProfileByUserID :one
-SELECT id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at, staff_role FROM profiles
+SELECT id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at FROM profiles
 WHERE user_id = $1
 `
 
@@ -433,7 +344,6 @@ func (q *Queries) GetProfileByUserID(ctx context.Context, userID uuid.UUID) (Pro
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.StaffRole,
 	)
 	return i, err
 }
@@ -459,7 +369,7 @@ func (q *Queries) GetRefreshToken(ctx context.Context, tokenHash string) (Refres
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at, role FROM users
+SELECT id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at FROM users
 WHERE email = $1
 `
 
@@ -475,13 +385,12 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.IsDeactivated,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Role,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at, role FROM users
+SELECT id, email, password_hash, email_verified_at, is_suspended, is_deactivated, created_at, updated_at FROM users
 WHERE id = $1
 `
 
@@ -497,13 +406,12 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.IsDeactivated,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Role,
 	)
 	return i, err
 }
 
 const getUserByOAuthProvider = `-- name: GetUserByOAuthProvider :one
-SELECT u.id, u.email, u.password_hash, u.email_verified_at, u.is_suspended, u.is_deactivated, u.created_at, u.updated_at, u.role FROM users u
+SELECT u.id, u.email, u.password_hash, u.email_verified_at, u.is_suspended, u.is_deactivated, u.created_at, u.updated_at FROM users u
 JOIN oauth_connections o ON u.id = o.user_id
 WHERE o.provider = $1 AND o.provider_user_id = $2
 `
@@ -525,7 +433,6 @@ func (q *Queries) GetUserByOAuthProvider(ctx context.Context, arg GetUserByOAuth
 		&i.IsDeactivated,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Role,
 	)
 	return i, err
 }
@@ -612,17 +519,6 @@ func (q *Queries) MarkEmailVerified(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const markInvitationAccepted = `-- name: MarkInvitationAccepted :exec
-UPDATE invitations
-SET accepted_at = now()
-WHERE id = $1
-`
-
-func (q *Queries) MarkInvitationAccepted(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, markInvitationAccepted, id)
-	return err
-}
-
 const markOTPUsed = `-- name: MarkOTPUsed :exec
 UPDATE otp_codes
 SET used_at = now()
@@ -688,7 +584,7 @@ SET
   profile_url = COALESCE($5, profile_url),
   avatar_url = COALESCE($6, avatar_url)
 WHERE user_id = $7
-RETURNING id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at, staff_role
+RETURNING id, user_id, first_name, last_name, username, display_name, profile_url, avatar_url, created_at, updated_at
 `
 
 type UpdateProfileParams struct {
@@ -723,7 +619,6 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (P
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.StaffRole,
 	)
 	return i, err
 }

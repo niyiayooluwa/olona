@@ -13,10 +13,6 @@ import (
 
 type Querier interface {
 	CheckUsernameExists(ctx context.Context, username pgtype.Text) (bool, error)
-	// ===================================
-	// INVITATIONS
-	// ===================================
-	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (Invitation, error)
 	CreateOAuthConnection(ctx context.Context, arg CreateOAuthConnectionParams) (OauthConnection, error)
 	// ===================================
 	// OTP
@@ -35,14 +31,11 @@ type Querier interface {
 	// ===================================
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeactivateUser(ctx context.Context, id uuid.UUID) error
-	DeleteInvitation(ctx context.Context, id uuid.UUID) error
 	DeleteOAuthConnection(ctx context.Context, arg DeleteOAuthConnectionParams) error
 	DeleteOTP(ctx context.Context, id uuid.UUID) error
 	DeleteProfile(ctx context.Context, userID uuid.UUID) error
 	DeleteRefreshToken(ctx context.Context, id uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
-	GetInvitationByID(ctx context.Context, id uuid.UUID) (Invitation, error)
-	GetInvitationByToken(ctx context.Context, tokenHash string) (Invitation, error)
 	// ===================================
 	// OAUTH
 	// ===================================
@@ -57,7 +50,6 @@ type Querier interface {
 	GetValidOTPForUpdate(ctx context.Context, arg GetValidOTPForUpdateParams) (OtpCode, error)
 	IncrementOTPAttempts(ctx context.Context, id uuid.UUID) (int32, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) error
-	MarkInvitationAccepted(ctx context.Context, id uuid.UUID) error
 	MarkOTPUsed(ctx context.Context, id uuid.UUID) error
 	RevokeAllUserRefreshTokens(ctx context.Context, userID uuid.UUID) error
 	RevokeRefreshToken(ctx context.Context, id uuid.UUID) error

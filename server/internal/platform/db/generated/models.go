@@ -11,16 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Invitation struct {
-	ID         uuid.UUID  `json:"id"`
-	Email      string     `json:"email"`
-	TokenHash  string     `json:"token_hash"`
-	InvitedBy  uuid.UUID  `json:"invited_by"`
-	ExpiresAt  time.Time  `json:"expires_at"`
-	AcceptedAt *time.Time `json:"accepted_at"`
-	CreatedAt  time.Time  `json:"created_at"`
-}
-
 type OauthConnection struct {
 	ID             uuid.UUID `json:"id"`
 	UserID         uuid.UUID `json:"user_id"`
@@ -52,7 +42,6 @@ type Profile struct {
 	AvatarUrl   pgtype.Text `json:"avatar_url"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
-	StaffRole   *string     `json:"staff_role"`
 }
 
 type RefreshToken struct {
@@ -74,5 +63,4 @@ type User struct {
 	IsDeactivated   bool        `json:"is_deactivated"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
-	Role            string      `json:"role"`
 }
