@@ -52,15 +52,6 @@ CREATE TABLE otp_codes (
     used_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE TABLE invitations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL,
-    token_hash VARCHAR(255) UNIQUE NOT NULL,
-    invited_by UUID NOT NULL REFERENCES users(id),
-    expires_at TIMESTAMPTZ NOT NULL,
-    accepted_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
 -- Indexes
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
@@ -80,7 +71,6 @@ UPDATE ON oauth_connections FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 -- Down
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS invitations CASCADE;
 DROP TABLE IF EXISTS otp_codes CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS oauth_connections CASCADE;
