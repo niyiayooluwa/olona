@@ -77,14 +77,6 @@ type AuthRepository interface {
 	MarkOTPUsed(ctx context.Context, id uuid.UUID) error
 	DeleteOTP(ctx context.Context, id uuid.UUID) error
 
-	// ===================================
-	// INVITATIONS
-	// ===================================
-	CreateInvitation(ctx context.Context, email, tokenHash string, invitedBy uuid.UUID, expiresAt time.Time) (db.Invitation, error)
-	GetInvitationByID(ctx context.Context, id uuid.UUID) (db.Invitation, error)
-	GetInvitationByToken(ctx context.Context, tokenHash string) (db.Invitation, error)
-	MarkInvitationAccepted(ctx context.Context, id uuid.UUID) error
-	DeleteInvitation(ctx context.Context, id uuid.UUID) error
 
 	// ===================================
 	// TRANSACTIONS
@@ -402,39 +394,6 @@ func (repo *authRepositoryImpl) DeleteOTP(ctx context.Context, id uuid.UUID) err
 	return wrap(err)
 }
 
-// ===================================
-// INVITATIONS
-// ===================================
-
-func (repo *authRepositoryImpl) CreateInvitation(ctx context.Context, email, tokenHash string, invitedBy uuid.UUID, expiresAt time.Time) (db.Invitation, error) {
-	invitation, err := repo.queries.CreateInvitation(ctx, db.CreateInvitationParams{
-		Email:     email,
-		TokenHash: tokenHash,
-		InvitedBy: invitedBy,
-		ExpiresAt: expiresAt,
-	})
-	return invitation, wrap(err)
-}
-
-func (repo *authRepositoryImpl) GetInvitationByID(ctx context.Context, id uuid.UUID) (db.Invitation, error) {
-	invitation, err := repo.queries.GetInvitationByID(ctx, id)
-	return invitation, wrap(err)
-}
-
-func (repo *authRepositoryImpl) GetInvitationByToken(ctx context.Context, tokenHash string) (db.Invitation, error) {
-	invitation, err := repo.queries.GetInvitationByToken(ctx, tokenHash)
-	return invitation, wrap(err)
-}
-
-func (repo *authRepositoryImpl) MarkInvitationAccepted(ctx context.Context, id uuid.UUID) error {
-	err := repo.queries.MarkInvitationAccepted(ctx, id)
-	return wrap(err)
-}
-
-func (repo *authRepositoryImpl) DeleteInvitation(ctx context.Context, id uuid.UUID) error {
-	err := repo.queries.DeleteInvitation(ctx, id)
-	return wrap(err)
-}
 
 // ===================================
 // HELPERS & ERROR HANDLING

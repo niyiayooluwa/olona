@@ -408,34 +408,3 @@ func (h *AuthHandler) DeleteProfile(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-
-// AcceptInvite godoc
-// @Summary      Accept invitation
-// @Description  Creates an account using an invite token.
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        request body AcceptInviteRequest true "Invite details"
-// @Success      200 {object} TokenPairEnvelope
-// @Failure      400 {object} apiresponse.ErrorEnvelope "invalid body"
-// @Failure      401 {object} apiresponse.ErrorEnvelope "invalid token"
-// @Failure      409 {object} apiresponse.ErrorEnvelope "username already claimed"
-// @Router       /auth/accept-invite [post]
-func (h *AuthHandler) AcceptInvite(c echo.Context) error {
-	var req AcceptInviteRequest
-	if err := c.Bind(&req); err != nil {
-		return httperr.InvalidBody(c)
-	}
-
-	profileInput := model.ProfileInput{}
-	if req.Username != "" {
-		profileInput.Username = &req.Username
-	}
-
-	tokens, err := h.svc.Signup.AcceptInvite(c.Request().Context(), req.Token, req.Password, profileInput)
-	if err != nil {
-		return httperr.Fail(c, err)
-	}
-
-	return c.JSON(http.StatusOK, tokenPair(tokens.AccessToken, tokens.RefreshToken))
-}

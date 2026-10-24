@@ -14,7 +14,6 @@ type Services struct {
 	Session    *SessionService
 	Password   *PasswordService
 	Profile    *ProfileService
-	Invitation *InvitationService
 	Admin      *UserAdminService
 }
 
@@ -30,7 +29,6 @@ func NewServices(
 		Session:    NewSessionService(repo, cfg, jwtIssuer),
 		Password:   NewPasswordService(repo, cfg, mailer),
 		Profile:    NewProfileService(repo, cfg),
-		Invitation: NewInvitationService(repo, mailer),
 		Admin:      NewUserAdminService(repo),
 	}
 }

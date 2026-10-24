@@ -52,12 +52,6 @@ type fakeQuerier struct {
 	incrementOTPAttemptsFn func(ctx context.Context, id uuid.UUID) (int32, error)
 	markOTPUsedFn          func(ctx context.Context, id uuid.UUID) error
 	deleteOTPFn            func(ctx context.Context, id uuid.UUID) error
-
-	createInvitationFn       func(ctx context.Context, arg db.CreateInvitationParams) (db.Invitation, error)
-	getInvitationByIDFn      func(ctx context.Context, id uuid.UUID) (db.Invitation, error)
-	getInvitationByTokenFn   func(ctx context.Context, tokenHash string) (db.Invitation, error)
-	markInvitationAcceptedFn func(ctx context.Context, id uuid.UUID) error
-	deleteInvitationFn       func(ctx context.Context, id uuid.UUID) error
 }
 
 func (f *fakeQuerier) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
@@ -266,41 +260,6 @@ func (f *fakeQuerier) MarkOTPUsed(ctx context.Context, id uuid.UUID) error {
 func (f *fakeQuerier) DeleteOTP(ctx context.Context, id uuid.UUID) error {
 	if f.deleteOTPFn != nil {
 		return f.deleteOTPFn(ctx, id)
-	}
-	return nil
-}
-
-func (f *fakeQuerier) CreateInvitation(ctx context.Context, arg db.CreateInvitationParams) (db.Invitation, error) {
-	if f.createInvitationFn != nil {
-		return f.createInvitationFn(ctx, arg)
-	}
-	return db.Invitation{}, nil
-}
-
-func (f *fakeQuerier) GetInvitationByID(ctx context.Context, id uuid.UUID) (db.Invitation, error) {
-	if f.getInvitationByIDFn != nil {
-		return f.getInvitationByIDFn(ctx, id)
-	}
-	return db.Invitation{}, nil
-}
-
-func (f *fakeQuerier) GetInvitationByToken(ctx context.Context, tokenHash string) (db.Invitation, error) {
-	if f.getInvitationByTokenFn != nil {
-		return f.getInvitationByTokenFn(ctx, tokenHash)
-	}
-	return db.Invitation{}, nil
-}
-
-func (f *fakeQuerier) MarkInvitationAccepted(ctx context.Context, id uuid.UUID) error {
-	if f.markInvitationAcceptedFn != nil {
-		return f.markInvitationAcceptedFn(ctx, id)
-	}
-	return nil
-}
-
-func (f *fakeQuerier) DeleteInvitation(ctx context.Context, id uuid.UUID) error {
-	if f.deleteInvitationFn != nil {
-		return f.deleteInvitationFn(ctx, id)
 	}
 	return nil
 }
@@ -864,127 +823,6 @@ func TestOTPRepository(t *testing.T) {
 		repoFail := NewAuthRepository(fakeFail)
 		_, err = repoFail.IncrementOTPAttempts(ctx, testOTPID)
 		if err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-	})
-}
-
-// ===================================
-// UNIT TESTS: INVITATIONS (HAPPY & SAD)
-// ===================================
-
-func TestInvitationRepository(t *testing.T) {
-	ctx := context.Background()
-	testInviteID := uuid.New()
-	testInvitedBy := uuid.New()
-	testEmail := "invited@example.com"
-	testTokenHash := "hash123"
-
-	t.Run("CreateInvitation - Happy Path", func(t *testing.T) {
-		fake := &fakeQuerier{
-			createInvitationFn: func(ctx context.Context, arg db.CreateInvitationParams) (db.Invitation, error) {
-				return db.Invitation{ID: testInviteID, Email: arg.Email}, nil
-			},
-		}
-		repo := NewAuthRepository(fake)
-		inv, err := repo.CreateInvitation(ctx, testEmail, testTokenHash, testInvitedBy, time.Now().Add(7*24*time.Hour))
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if inv.Email != testEmail {
-			t.Errorf("expected email %s, got %s", testEmail, inv.Email)
-		}
-	})
-
-	t.Run("CreateInvitation - Sad Path (Foreign Key Violation 23503)", func(t *testing.T) {
-		fake := &fakeQuerier{
-			createInvitationFn: func(ctx context.Context, arg db.CreateInvitationParams) (db.Invitation, error) {
-				return db.Invitation{}, &pgconn.PgError{Code: "23503"}
-			},
-		}
-		repo := NewAuthRepository(fake)
-		_, err := repo.CreateInvitation(ctx, testEmail, testTokenHash, testInvitedBy, time.Now().Add(7*24*time.Hour))
-		if !errors.Is(err, ErrForeignKey) {
-			t.Fatalf("expected ErrForeignKey, got: %v", err)
-		}
-	})
-
-	t.Run("GetInvitationByID - Happy Path", func(t *testing.T) {
-		fake := &fakeQuerier{
-			getInvitationByIDFn: func(ctx context.Context, id uuid.UUID) (db.Invitation, error) {
-				return db.Invitation{ID: id, Email: testEmail}, nil
-			},
-		}
-		repo := NewAuthRepository(fake)
-		inv, err := repo.GetInvitationByID(ctx, testInviteID)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if inv.ID != testInviteID {
-			t.Errorf("expected ID %v, got %v", testInviteID, inv.ID)
-		}
-	})
-
-	t.Run("GetInvitationByID - Sad Path (Not Found)", func(t *testing.T) {
-		fake := &fakeQuerier{
-			getInvitationByIDFn: func(ctx context.Context, id uuid.UUID) (db.Invitation, error) {
-				return db.Invitation{}, pgx.ErrNoRows
-			},
-		}
-		repo := NewAuthRepository(fake)
-		_, err := repo.GetInvitationByID(ctx, testInviteID)
-		if !errors.Is(err, ErrNotFound) {
-			t.Fatalf("expected ErrNotFound, got: %v", err)
-		}
-	})
-
-	t.Run("GetInvitationByToken - Happy Path", func(t *testing.T) {
-		fake := &fakeQuerier{
-			getInvitationByTokenFn: func(ctx context.Context, tokenHash string) (db.Invitation, error) {
-				return db.Invitation{ID: testInviteID, TokenHash: tokenHash}, nil
-			},
-		}
-		repo := NewAuthRepository(fake)
-		inv, err := repo.GetInvitationByToken(ctx, testTokenHash)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if inv.TokenHash != testTokenHash {
-			t.Errorf("expected token hash %s, got %s", testTokenHash, inv.TokenHash)
-		}
-	})
-
-	t.Run("GetInvitationByToken - Sad Path (Not Found)", func(t *testing.T) {
-		fake := &fakeQuerier{
-			getInvitationByTokenFn: func(ctx context.Context, tokenHash string) (db.Invitation, error) {
-				return db.Invitation{}, pgx.ErrNoRows
-			},
-		}
-		repo := NewAuthRepository(fake)
-		_, err := repo.GetInvitationByToken(ctx, testTokenHash)
-		if !errors.Is(err, ErrNotFound) {
-			t.Fatalf("expected ErrNotFound, got: %v", err)
-		}
-	})
-
-	t.Run("DeleteInvitation - Happy & Sad", func(t *testing.T) {
-		fake := &fakeQuerier{
-			deleteInvitationFn: func(ctx context.Context, id uuid.UUID) error {
-				return nil
-			},
-		}
-		repo := NewAuthRepository(fake)
-		if err := repo.DeleteInvitation(ctx, testInviteID); err != nil {
-			t.Fatalf("expected success, got %v", err)
-		}
-
-		fakeFail := &fakeQuerier{
-			deleteInvitationFn: func(ctx context.Context, id uuid.UUID) error {
-				return errors.New("db error")
-			},
-		}
-		repoFail := NewAuthRepository(fakeFail)
-		if err := repoFail.DeleteInvitation(ctx, testInviteID); err == nil {
 			t.Fatalf("expected error, got nil")
 		}
 	})

@@ -83,18 +83,6 @@ var (
 	ErrOTPCooldown = errors.New("please wait before requesting another code")
 )
 
-// Invitation errors
-var (
-	// ErrInvitationNotFound is returned when the token doesn't exist.
-	ErrInvitationNotFound = errors.New("invitation not found")
-
-	// ErrInvitationExpired is returned when the invite token has passed its expiry.
-	ErrInvitationExpired = errors.New("invitation has expired")
-
-	// ErrInvitationAlreadyAccepted is returned if the invite token was already redeemed.
-	ErrInvitationAlreadyAccepted = errors.New("invitation has already been accepted")
-)
-
 // OAuth errors
 var (
 	// ErrOAuthProviderNotSupported is returned when the requested provider is not in config.

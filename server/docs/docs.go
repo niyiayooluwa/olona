@@ -15,58 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/accept-invite": {
-            "post": {
-                "description": "Creates an account using an invite token.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Accept invitation",
-                "parameters": [
-                    {
-                        "description": "Invite details",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.AcceptInviteRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.TokenPairEnvelope"
-                        }
-                    },
-                    "400": {
-                        "description": "invalid body",
-                        "schema": {
-                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
-                        }
-                    },
-                    "401": {
-                        "description": "invalid token",
-                        "schema": {
-                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
-                        }
-                    },
-                    "409": {
-                        "description": "username already claimed",
-                        "schema": {
-                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/check-username": {
             "get": {
                 "description": "Checks if a username is available for registration.",
@@ -676,20 +624,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "field": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.AcceptInviteRequest": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }

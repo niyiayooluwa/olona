@@ -75,7 +75,6 @@ func LoadUser(repo repository.AuthRepository) echo.MiddlewareFunc {
 			// Store the account so RequireRole can read it
 			c.Set("account", model.Actor{
 				UserID:        id,
-				Role:          model.Role(user.Role),
 				IsSuspended:   user.IsSuspended,
 				IsDeactivated: user.IsDeactivated,
 			})

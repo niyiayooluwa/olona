@@ -23,15 +23,6 @@ definitions:
       field:
         type: string
     type: object
-  handler.AcceptInviteRequest:
-    properties:
-      password:
-        type: string
-      token:
-        type: string
-      username:
-        type: string
-    type: object
   handler.ChangePasswordRequest:
     properties:
       new_password:
@@ -167,40 +158,6 @@ info:
   title: Olona API
   version: "1.0"
 paths:
-  /auth/accept-invite:
-    post:
-      consumes:
-      - application/json
-      description: Creates an account using an invite token.
-      parameters:
-      - description: Invite details
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.AcceptInviteRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.TokenPairEnvelope'
-        "400":
-          description: invalid body
-          schema:
-            $ref: '#/definitions/apiresponse.ErrorEnvelope'
-        "401":
-          description: invalid token
-          schema:
-            $ref: '#/definitions/apiresponse.ErrorEnvelope'
-        "409":
-          description: username already claimed
-          schema:
-            $ref: '#/definitions/apiresponse.ErrorEnvelope'
-      summary: Accept invitation
-      tags:
-      - auth
   /auth/check-username:
     get:
       description: Checks if a username is available for registration.

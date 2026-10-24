@@ -132,7 +132,6 @@ func NewRouter(
 	authGroup.POST("/logout", h.Auth.Logout, loginRateLimit)
 	authGroup.POST("/forgot-password", h.Auth.ForgotPassword, loginRateLimit)
 	authGroup.POST("/reset-password", h.Auth.ResetPassword, loginRateLimit)
-	authGroup.POST("/accept-invite", h.Auth.AcceptInvite, loginRateLimit)
 	// Stays under /auth and stays unauthenticated: the Swagger contract
 	// documents GET /auth/check-username, and the check is part of the signup
 	// flow. Moving it would change a published API path, and putting it behind

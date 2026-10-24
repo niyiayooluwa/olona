@@ -72,12 +72,6 @@ func Classify(err error) (status int, code, message string) {
 		return http.StatusUnauthorized, "otp_expired", "That code has expired. Request a new one."
 	case errors.Is(err, autherr.ErrOTPNotFound):
 		return http.StatusUnauthorized, "otp_not_found", "No active code found. Request a new one."
-	case errors.Is(err, autherr.ErrInvitationNotFound):
-		return http.StatusUnauthorized, "invitation_not_found", "That invitation couldn't be found."
-	case errors.Is(err, autherr.ErrInvitationExpired):
-		return http.StatusUnauthorized, "invitation_expired", "That invitation has expired."
-	case errors.Is(err, autherr.ErrInvitationAlreadyAccepted):
-		return http.StatusUnauthorized, "invitation_already_accepted", "That invitation has already been used."
 	case errors.Is(err, autherr.ErrOAuthAccount):
 		return http.StatusUnauthorized, "oauth_account", "This account signs in with a provider. Use that instead."
 	case errors.Is(err, autherr.ErrOAuthProviderNotSupported):
