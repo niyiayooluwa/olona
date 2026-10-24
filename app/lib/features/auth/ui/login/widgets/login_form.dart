@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:olona/core/constants/constants.dart';
 import 'package:olona/core/utils/validators.dart';
@@ -86,6 +87,18 @@ class LoginForm extends HookConsumerWidget {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: UIConstants.sm),
+
+              Align(
+                alignment: AlignmentGeometry.centerRight,
+                child: ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  trailing: Icon(LucideIcons.arrowRight),
+                  enabled: !isLoading,
+                  onPressed: () => context.goNamed('forgot-password'),
+                  child: const Text('Forgot Password'),
+                ),
               ),
               const SizedBox(height: UIConstants.lg),
 

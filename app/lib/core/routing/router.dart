@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:olona/core/storage/secure_storage.dart';
 import 'package:olona/features/auth/ui/login/login_screen.dart';
 import 'package:olona/features/auth/ui/register/register_screen.dart';
+import 'package:olona/features/auth/ui/reset_password/forgot_password_screen.dart';
+import 'package:olona/features/auth/ui/reset_password/reset_password_screen.dart';
 import 'package:olona/features/auth/ui/verify/verify_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -24,7 +26,7 @@ GoRouter router(Ref ref) {
     navigatorKey: navigatorKey,
     // Initial location is always splash due to a useEffect trigger that was
     // defined there which works in tandem with our redirect logic
-    initialLocation: '/register',
+    initialLocation: '/login',
 
     // Le redirect logic
     redirect: (context, state) async {
@@ -108,6 +110,22 @@ GoRouter router(Ref ref) {
               state.uri.queryParameters['email'] ??
               '';
           return VerifyScreen(email: email);
+        },
+      ),
+
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        name: 'reset-password',
+        builder: (context, state) {
+          final email = (state.extra as String?) ??
+              state.uri.queryParameters['email'] ??
+              '';
+          return ResetPasswordScreen(email: email);
         },
       ),
     ],

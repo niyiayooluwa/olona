@@ -6,6 +6,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'reset_password_controller.g.dart';
 
+@Riverpod(keepAlive: true)
+class ResetPasswordEmail extends _$ResetPasswordEmail {
+  @override
+  String build() => '';
+
+  void setEmail(String email) => state = email;
+}
+
 @riverpod
 class ResetPasswordController extends _$ResetPasswordController {
   @override
@@ -15,6 +23,9 @@ class ResetPasswordController extends _$ResetPasswordController {
     if (state.isLoading) return;
 
     state = const AsyncValue.loading();
+
+    // Store email for reset password screen
+    ref.read(resetPasswordEmailProvider.notifier).setEmail(email);
 
     final repo = ref.read(authRepositoryProvider);
     final result = await repo.forgotPassword(
