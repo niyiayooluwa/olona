@@ -3,7 +3,6 @@ package model
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -11,7 +10,6 @@ import (
 // Mailer abstracts transactional email delivery.
 type Mailer interface {
 	SendOTP(ctx context.Context, email, code string) error
-	SendInvite(ctx context.Context, email, token string) error
 	SendPasswordReset(ctx context.Context, email, code string) error
 }
 
@@ -19,15 +17,6 @@ type Mailer interface {
 type TokenPair struct {
 	AccessToken  string
 	RefreshToken string
-}
-
-// InvitationDetails represents the visible information about an invite token.
-type InvitationDetails struct {
-	ID        uuid.UUID
-	Email     string
-	InvitedBy uuid.UUID
-	ExpiresAt time.Time
-	Role      Role
 }
 
 // ProfileInput carries optional user profile fields for signup or profile updates.

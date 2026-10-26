@@ -66,10 +66,3 @@ type UpdateProfileRequest struct {
 	DisplayName *string `json:"display_name"`
 	AvatarURL   *string `json:"avatar_url"`
 }
-
-// AcceptInviteRequest allows an invited user to create their account.
-type AcceptInviteRequest struct {
-	Token    string `json:"token"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}

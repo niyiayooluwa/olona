@@ -77,7 +77,6 @@ type AuthRepository interface {
 	MarkOTPUsed(ctx context.Context, id uuid.UUID) error
 	DeleteOTP(ctx context.Context, id uuid.UUID) error
 
-
 	// ===================================
 	// TRANSACTIONS
 	// ===================================
@@ -393,7 +392,6 @@ func (repo *authRepositoryImpl) DeleteOTP(ctx context.Context, id uuid.UUID) err
 	err := repo.queries.DeleteOTP(ctx, id)
 	return wrap(err)
 }
-
 
 // ===================================
 // HELPERS & ERROR HANDLING

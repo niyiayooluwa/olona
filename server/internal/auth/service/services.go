@@ -10,11 +10,11 @@ import (
 
 // Services encapsulates all individual auth domain services.
 type Services struct {
-	Signup     *SignupService
-	Session    *SessionService
-	Password   *PasswordService
-	Profile    *ProfileService
-	Admin      *UserAdminService
+	Signup   *SignupService
+	Session  *SessionService
+	Password *PasswordService
+	Profile  *ProfileService
+	Admin    *UserAdminService
 }
 
 // NewServices instantiates and wires all domain services.
@@ -25,10 +25,10 @@ func NewServices(
 	mailer model.Mailer,
 ) *Services {
 	return &Services{
-		Signup:     NewSignupService(repo, cfg, jwtIssuer, mailer),
-		Session:    NewSessionService(repo, cfg, jwtIssuer),
-		Password:   NewPasswordService(repo, cfg, mailer),
-		Profile:    NewProfileService(repo, cfg),
-		Admin:      NewUserAdminService(repo),
+		Signup:   NewSignupService(repo, cfg, jwtIssuer, mailer),
+		Session:  NewSessionService(repo, cfg, jwtIssuer),
+		Password: NewPasswordService(repo, cfg, mailer),
+		Profile:  NewProfileService(repo, cfg),
+		Admin:    NewUserAdminService(repo),
 	}
 }
