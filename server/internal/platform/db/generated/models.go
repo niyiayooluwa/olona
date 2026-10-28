@@ -5,11 +5,235 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type WorkspaceMemberStatus string
+
+const (
+	WorkspaceMemberStatusActive  WorkspaceMemberStatus = "active"
+	WorkspaceMemberStatusRemoved WorkspaceMemberStatus = "removed"
+)
+
+func (e *WorkspaceMemberStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceMemberStatus(s)
+	case string:
+		*e = WorkspaceMemberStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceMemberStatus: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceMemberStatus struct {
+	WorkspaceMemberStatus WorkspaceMemberStatus `json:"workspace_member_status"`
+	Valid                 bool                  `json:"valid"` // Valid is true if WorkspaceMemberStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceMemberStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceMemberStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceMemberStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceMemberStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceMemberStatus), nil
+}
+
+type WorkspaceRequestStatus string
+
+const (
+	WorkspaceRequestStatusPending   WorkspaceRequestStatus = "pending"
+	WorkspaceRequestStatusApproved  WorkspaceRequestStatus = "approved"
+	WorkspaceRequestStatusRejected  WorkspaceRequestStatus = "rejected"
+	WorkspaceRequestStatusCancelled WorkspaceRequestStatus = "cancelled"
+	WorkspaceRequestStatusExpired   WorkspaceRequestStatus = "expired"
+)
+
+func (e *WorkspaceRequestStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceRequestStatus(s)
+	case string:
+		*e = WorkspaceRequestStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceRequestStatus: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceRequestStatus struct {
+	WorkspaceRequestStatus WorkspaceRequestStatus `json:"workspace_request_status"`
+	Valid                  bool                   `json:"valid"` // Valid is true if WorkspaceRequestStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceRequestStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceRequestStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceRequestStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceRequestStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceRequestStatus), nil
+}
+
+type WorkspaceRequestType string
+
+const (
+	WorkspaceRequestTypeArchive           WorkspaceRequestType = "archive"
+	WorkspaceRequestTypeDelete            WorkspaceRequestType = "delete"
+	WorkspaceRequestTypeTransferOwnership WorkspaceRequestType = "transfer_ownership"
+	WorkspaceRequestTypeMove              WorkspaceRequestType = "move"
+)
+
+func (e *WorkspaceRequestType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceRequestType(s)
+	case string:
+		*e = WorkspaceRequestType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceRequestType: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceRequestType struct {
+	WorkspaceRequestType WorkspaceRequestType `json:"workspace_request_type"`
+	Valid                bool                 `json:"valid"` // Valid is true if WorkspaceRequestType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceRequestType) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceRequestType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceRequestType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceRequestType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceRequestType), nil
+}
+
+type WorkspaceStatus string
+
+const (
+	WorkspaceStatusActive           WorkspaceStatus = "active"
+	WorkspaceStatusSuspended        WorkspaceStatus = "suspended"
+	WorkspaceStatusArchiveRequested WorkspaceStatus = "archive_requested"
+	WorkspaceStatusArchived         WorkspaceStatus = "archived"
+	WorkspaceStatusDeleteRequested  WorkspaceStatus = "delete_requested"
+	WorkspaceStatusPendingDeletion  WorkspaceStatus = "pending_deletion"
+	WorkspaceStatusDeleted          WorkspaceStatus = "deleted"
+)
+
+func (e *WorkspaceStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceStatus(s)
+	case string:
+		*e = WorkspaceStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceStatus: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceStatus struct {
+	WorkspaceStatus WorkspaceStatus `json:"workspace_status"`
+	Valid           bool            `json:"valid"` // Valid is true if WorkspaceStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceStatus), nil
+}
+
+type WorkspaceTier string
+
+const (
+	WorkspaceTierOwner  WorkspaceTier = "owner"
+	WorkspaceTierAdmin  WorkspaceTier = "admin"
+	WorkspaceTierMember WorkspaceTier = "member"
+	WorkspaceTierViewer WorkspaceTier = "viewer"
+)
+
+func (e *WorkspaceTier) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WorkspaceTier(s)
+	case string:
+		*e = WorkspaceTier(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WorkspaceTier: %T", src)
+	}
+	return nil
+}
+
+type NullWorkspaceTier struct {
+	WorkspaceTier WorkspaceTier `json:"workspace_tier"`
+	Valid         bool          `json:"valid"` // Valid is true if WorkspaceTier is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWorkspaceTier) Scan(value interface{}) error {
+	if value == nil {
+		ns.WorkspaceTier, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WorkspaceTier.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWorkspaceTier) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WorkspaceTier), nil
+}
 
 type OauthConnection struct {
 	ID             uuid.UUID `json:"id"`
@@ -63,4 +287,78 @@ type User struct {
 	IsDeactivated   bool        `json:"is_deactivated"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
+}
+
+type Workspace struct {
+	ID              uuid.UUID       `json:"id"`
+	ParentID        pgtype.UUID     `json:"parent_id"`
+	RootID          uuid.UUID       `json:"root_id"`
+	Name            string          `json:"name"`
+	Status          WorkspaceStatus `json:"status"`
+	SinglePrincipal bool            `json:"single_principal"`
+	CreatedBy       uuid.UUID       `json:"created_by"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+	ArchivedAt      *time.Time      `json:"archived_at"`
+	SuspendedAt     *time.Time      `json:"suspended_at"`
+	SuspendedBy     pgtype.UUID     `json:"suspended_by"`
+	DeleteAfter     *time.Time      `json:"delete_after"`
+}
+
+type WorkspaceAudit struct {
+	ID          uuid.UUID   `json:"id"`
+	WorkspaceID uuid.UUID   `json:"workspace_id"`
+	ActorID     pgtype.UUID `json:"actor_id"`
+	Action      string      `json:"action"`
+	TargetType  string      `json:"target_type"`
+	TargetID    pgtype.UUID `json:"target_id"`
+	Metadata    []byte      `json:"metadata"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
+type WorkspaceClosure struct {
+	AncestorID   uuid.UUID `json:"ancestor_id"`
+	DescendantID uuid.UUID `json:"descendant_id"`
+	Depth        int32     `json:"depth"`
+}
+
+type WorkspaceInvitation struct {
+	ID           uuid.UUID     `json:"id"`
+	WorkspaceID  uuid.UUID     `json:"workspace_id"`
+	Email        string        `json:"email"`
+	Tier         WorkspaceTier `json:"tier"`
+	Capabilities []byte        `json:"capabilities"`
+	TokenHash    string        `json:"token_hash"`
+	InvitedBy    uuid.UUID     `json:"invited_by"`
+	ExpiresAt    time.Time     `json:"expires_at"`
+	AcceptedAt   *time.Time    `json:"accepted_at"`
+	RevokedAt    *time.Time    `json:"revoked_at"`
+	CreatedAt    time.Time     `json:"created_at"`
+}
+
+type WorkspaceMember struct {
+	ID           uuid.UUID             `json:"id"`
+	WorkspaceID  uuid.UUID             `json:"workspace_id"`
+	UserID       uuid.UUID             `json:"user_id"`
+	Tier         WorkspaceTier         `json:"tier"`
+	Capabilities []byte                `json:"capabilities"`
+	Status       WorkspaceMemberStatus `json:"status"`
+	JoinedAt     time.Time             `json:"joined_at"`
+	InvitedBy    pgtype.UUID           `json:"invited_by"`
+}
+
+type WorkspaceRequest struct {
+	ID           uuid.UUID              `json:"id"`
+	WorkspaceID  uuid.UUID              `json:"workspace_id"`
+	Type         WorkspaceRequestType   `json:"type"`
+	Status       WorkspaceRequestStatus `json:"status"`
+	RequestedBy  uuid.UUID              `json:"requested_by"`
+	Reason       *string                `json:"reason"`
+	TargetUserID pgtype.UUID            `json:"target_user_id"`
+	NewParentID  pgtype.UUID            `json:"new_parent_id"`
+	DecidedBy    pgtype.UUID            `json:"decided_by"`
+	DecidedAt    *time.Time             `json:"decided_at"`
+	ExpiresAt    time.Time              `json:"expires_at"`
+	SoleApprover bool                   `json:"sole_approver"`
+	CreatedAt    time.Time              `json:"created_at"`
 }

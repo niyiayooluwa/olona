@@ -12,7 +12,18 @@ import (
 )
 
 type Querier interface {
+	// ===================================
+	// WORKSPACE MEMBERS & RELOCATION
+	// ===================================
+	AddWorkspaceMember(ctx context.Context, arg AddWorkspaceMemberParams) (WorkspaceMember, error)
+	CancelWorkspaceRequest(ctx context.Context, arg CancelWorkspaceRequestParams) (WorkspaceRequest, error)
 	CheckUsernameExists(ctx context.Context, username pgtype.Text) (bool, error)
+	CountActiveChildren(ctx context.Context, parentID pgtype.UUID) (int64, error)
+	// ===================================
+	// WORKSPACE AUDIT LOG (Immutable)
+	// ===================================
+	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (WorkspaceAudit, error)
+	CreateChildWorkspace(ctx context.Context, arg CreateChildWorkspaceParams) (Workspace, error)
 	CreateOAuthConnection(ctx context.Context, arg CreateOAuthConnectionParams) (OauthConnection, error)
 	// ===================================
 	// OTP
@@ -27,15 +38,36 @@ type Querier interface {
 	// ===================================
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	// ===================================
+	// WORKSPACES
+	// ===================================
+	CreateRootWorkspace(ctx context.Context, arg CreateRootWorkspaceParams) (Workspace, error)
+	// ===================================
 	// USER
 	// ===================================
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	// ===================================
+	// WORKSPACE INVITATIONS
+	// ===================================
+	CreateWorkspaceInvitation(ctx context.Context, arg CreateWorkspaceInvitationParams) (WorkspaceInvitation, error)
+	// ===================================
+	// WORKSPACE REQUESTS (Two-Key Control)
+	// ===================================
+	CreateWorkspaceRequest(ctx context.Context, arg CreateWorkspaceRequestParams) (WorkspaceRequest, error)
 	DeactivateUser(ctx context.Context, id uuid.UUID) error
+	DecideWorkspaceRequest(ctx context.Context, arg DecideWorkspaceRequestParams) (WorkspaceRequest, error)
 	DeleteOAuthConnection(ctx context.Context, arg DeleteOAuthConnectionParams) error
 	DeleteOTP(ctx context.Context, id uuid.UUID) error
 	DeleteProfile(ctx context.Context, userID uuid.UUID) error
 	DeleteRefreshToken(ctx context.Context, id uuid.UUID) error
+	// When moving subtree rooted at $1, remove paths between ancestors of $1 and descendants of $1
+	DeleteSubtreeClosureForMove(ctx context.Context, ancestorID uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
+	GetActiveMember(ctx context.Context, arg GetActiveMemberParams) (WorkspaceMember, error)
+	GetActiveOwner(ctx context.Context, workspaceID uuid.UUID) (WorkspaceMember, error)
+	GetAncestorAtDepth(ctx context.Context, arg GetAncestorAtDepthParams) (uuid.UUID, error)
+	// Resolves whether caller has direct membership or oversight access to a workspace
+	GetEffectiveAccess(ctx context.Context, arg GetEffectiveAccessParams) (GetEffectiveAccessRow, error)
+	GetImmediateParentClosure(ctx context.Context, descendantID uuid.UUID) (uuid.UUID, error)
 	// ===================================
 	// OAUTH
 	// ===================================
@@ -48,15 +80,51 @@ type Querier interface {
 	GetUserByOAuthProvider(ctx context.Context, arg GetUserByOAuthProviderParams) (User, error)
 	GetValidOTP(ctx context.Context, arg GetValidOTPParams) (OtpCode, error)
 	GetValidOTPForUpdate(ctx context.Context, arg GetValidOTPForUpdateParams) (OtpCode, error)
+	GetWorkspaceByID(ctx context.Context, id uuid.UUID) (Workspace, error)
+	GetWorkspaceInvitationByToken(ctx context.Context, tokenHash string) (WorkspaceInvitation, error)
+	GetWorkspaceRequestByID(ctx context.Context, id uuid.UUID) (WorkspaceRequest, error)
 	IncrementOTPAttempts(ctx context.Context, id uuid.UUID) (int32, error)
+	// Copies all ancestors of the parent with depth+1, and adds the self row (depth 0)
+	InsertChildClosure(ctx context.Context, arg InsertChildClosureParams) error
+	// ===================================
+	// WORKSPACE CLOSURE (Cheat-Sheet)
+	// ===================================
+	InsertRootClosure(ctx context.Context, ancestorID uuid.UUID) error
+	IsAncestor(ctx context.Context, arg IsAncestorParams) (bool, error)
+	ListActiveMembers(ctx context.Context, workspaceID uuid.UUID) ([]ListActiveMembersRow, error)
+	ListAuditLogsForWorkspace(ctx context.Context, arg ListAuditLogsForWorkspaceParams) ([]ListAuditLogsForWorkspaceRow, error)
+	ListPendingInvitations(ctx context.Context, workspaceID uuid.UUID) ([]WorkspaceInvitation, error)
+	// Lists pending requests for children where the user has oversight on the immediate parent
+	ListPendingRequestsForApprover(ctx context.Context, userID uuid.UUID) ([]ListPendingRequestsForApproverRow, error)
+	ListPendingRequestsForWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]ListPendingRequestsForWorkspaceRow, error)
+	// ===================================
+	// VISIBILITY & EFFECTIVE ACCESS
+	// ===================================
+	// Returns all active/accessible workspaces where user has direct membership or oversight
+	// Direct membership match
+	// Oversight match (user is owner/admin with oversight authority on an ancestor)
+	ListVisibleWorkspacesForUser(ctx context.Context, userID uuid.UUID) ([]ListVisibleWorkspacesForUserRow, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID) error
 	MarkOTPUsed(ctx context.Context, id uuid.UUID) error
+	MarkWorkspaceInvitationAccepted(ctx context.Context, id uuid.UUID) error
+	MoveWorkspace(ctx context.Context, arg MoveWorkspaceParams) (Workspace, error)
+	// Connect new ancestors to all nodes in the moved subtree
+	RebuildClosureForMovedSubtree(ctx context.Context, arg RebuildClosureForMovedSubtreeParams) error
+	RemoveMember(ctx context.Context, arg RemoveMemberParams) error
+	ResumeWorkspace(ctx context.Context, id uuid.UUID) (Workspace, error)
 	RevokeAllUserRefreshTokens(ctx context.Context, userID uuid.UUID) error
 	RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
+	RevokeWorkspaceInvitation(ctx context.Context, id uuid.UUID) error
+	SetWorkspaceStatus(ctx context.Context, arg SetWorkspaceStatusParams) (Workspace, error)
 	SuspendUser(ctx context.Context, id uuid.UUID) error
+	SuspendWorkspace(ctx context.Context, arg SuspendWorkspaceParams) (Workspace, error)
+	// Atomically demotes existing owner to admin and promotes target admin to owner
+	TransferOwnershipInWorkspace(ctx context.Context, arg TransferOwnershipInWorkspaceParams) error
 	UnsuspendUser(ctx context.Context, id uuid.UUID) error
+	UpdateMemberTierAndCapabilities(ctx context.Context, arg UpdateMemberTierAndCapabilitiesParams) (WorkspaceMember, error)
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateWorkspaceName(ctx context.Context, arg UpdateWorkspaceNameParams) (Workspace, error)
 }
 
 var _ Querier = (*Queries)(nil)
