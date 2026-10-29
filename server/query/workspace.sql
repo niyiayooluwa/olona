@@ -3,13 +3,13 @@
 -- ===================================
 
 -- name: CreateRootWorkspace :one
-INSERT INTO workspaces (id, parent_id, root_id, name, status, single_principal, created_by)
-VALUES ($1, NULL, $1, $2, 'active', false, $3)
+INSERT INTO workspaces (id, parent_id, root_id, name, description, status, single_principal, created_by)
+VALUES ($1, NULL, $1, $2, $3, 'active', false, $4)
 RETURNING *;
 
 -- name: CreateChildWorkspace :one
-INSERT INTO workspaces (id, parent_id, root_id, name, status, single_principal, created_by)
-VALUES ($1, $2, $3, $4, 'active', $5, $6)
+INSERT INTO workspaces (id, parent_id, root_id, name, description, status, single_principal, created_by)
+VALUES ($1, $2, $3, $4, $5, 'active', $6, $7)
 RETURNING *;
 
 -- name: GetWorkspaceByID :one
@@ -18,7 +18,7 @@ WHERE workspaces.id = $1;
 
 -- name: UpdateWorkspaceName :one
 UPDATE workspaces
-SET name = $2
+SET name = $2, description = $3
 WHERE workspaces.id = $1
 RETURNING *;
 

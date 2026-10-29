@@ -36,6 +36,7 @@ CREATE TABLE workspaces (
     parent_id UUID REFERENCES workspaces(id) ON DELETE RESTRICT,
     root_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
     name VARCHAR(255) NOT NULL,
+    description TEXT,
     status workspace_status NOT NULL DEFAULT 'active',
     single_principal BOOLEAN NOT NULL DEFAULT false,
     created_by UUID NOT NULL REFERENCES users(id),

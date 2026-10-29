@@ -144,9 +144,9 @@ func (q *Queries) CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) 
 }
 
 const createChildWorkspace = `-- name: CreateChildWorkspace :one
-INSERT INTO workspaces (id, parent_id, root_id, name, status, single_principal, created_by)
-VALUES ($1, $2, $3, $4, 'active', $5, $6)
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+INSERT INTO workspaces (id, parent_id, root_id, name, description, status, single_principal, created_by)
+VALUES ($1, $2, $3, $4, $5, 'active', $6, $7)
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type CreateChildWorkspaceParams struct {
@@ -154,6 +154,7 @@ type CreateChildWorkspaceParams struct {
 	ParentID        pgtype.UUID `json:"parent_id"`
 	RootID          uuid.UUID   `json:"root_id"`
 	Name            string      `json:"name"`
+	Description     *string     `json:"description"`
 	SinglePrincipal bool        `json:"single_principal"`
 	CreatedBy       uuid.UUID   `json:"created_by"`
 }
@@ -164,6 +165,7 @@ func (q *Queries) CreateChildWorkspace(ctx context.Context, arg CreateChildWorks
 		arg.ParentID,
 		arg.RootID,
 		arg.Name,
+		arg.Description,
 		arg.SinglePrincipal,
 		arg.CreatedBy,
 	)
@@ -173,6 +175,7 @@ func (q *Queries) CreateChildWorkspace(ctx context.Context, arg CreateChildWorks
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -188,28 +191,35 @@ func (q *Queries) CreateChildWorkspace(ctx context.Context, arg CreateChildWorks
 
 const createRootWorkspace = `-- name: CreateRootWorkspace :one
 
-INSERT INTO workspaces (id, parent_id, root_id, name, status, single_principal, created_by)
-VALUES ($1, NULL, $1, $2, 'active', false, $3)
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+INSERT INTO workspaces (id, parent_id, root_id, name, description, status, single_principal, created_by)
+VALUES ($1, NULL, $1, $2, $3, 'active', false, $4)
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type CreateRootWorkspaceParams struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	CreatedBy uuid.UUID `json:"created_by"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	CreatedBy   uuid.UUID `json:"created_by"`
 }
 
 // ===================================
 // WORKSPACES
 // ===================================
 func (q *Queries) CreateRootWorkspace(ctx context.Context, arg CreateRootWorkspaceParams) (Workspace, error) {
-	row := q.db.QueryRow(ctx, createRootWorkspace, arg.ID, arg.Name, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, createRootWorkspace,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.CreatedBy,
+	)
 	var i Workspace
 	err := row.Scan(
 		&i.ID,
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -510,7 +520,7 @@ func (q *Queries) GetImmediateParentClosure(ctx context.Context, descendantID uu
 }
 
 const getWorkspaceByID = `-- name: GetWorkspaceByID :one
-SELECT id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after FROM workspaces
+SELECT id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after FROM workspaces
 WHERE workspaces.id = $1
 `
 
@@ -522,6 +532,7 @@ func (q *Queries) GetWorkspaceByID(ctx context.Context, id uuid.UUID) (Workspace
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -1077,7 +1088,7 @@ const moveWorkspace = `-- name: MoveWorkspace :one
 UPDATE workspaces
 SET parent_id = $2
 WHERE workspaces.id = $1
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type MoveWorkspaceParams struct {
@@ -1093,6 +1104,7 @@ func (q *Queries) MoveWorkspace(ctx context.Context, arg MoveWorkspaceParams) (W
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -1153,7 +1165,7 @@ SET status = 'active',
     suspended_at = NULL,
     suspended_by = NULL
 WHERE workspaces.id = $1
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 func (q *Queries) ResumeWorkspace(ctx context.Context, id uuid.UUID) (Workspace, error) {
@@ -1164,6 +1176,7 @@ func (q *Queries) ResumeWorkspace(ctx context.Context, id uuid.UUID) (Workspace,
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -1194,7 +1207,7 @@ SET status = $2,
     archived_at = CASE WHEN $2 = 'archived'::workspace_status THEN now() ELSE workspaces.archived_at END,
     delete_after = CASE WHEN $2 = 'pending_deletion'::workspace_status THEN now() + interval '30 days' ELSE workspaces.delete_after END
 WHERE workspaces.id = $1
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type SetWorkspaceStatusParams struct {
@@ -1210,6 +1223,7 @@ func (q *Queries) SetWorkspaceStatus(ctx context.Context, arg SetWorkspaceStatus
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -1229,7 +1243,7 @@ SET status = 'suspended',
     suspended_at = now(),
     suspended_by = $2
 WHERE workspaces.id = $1
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type SuspendWorkspaceParams struct {
@@ -1245,6 +1259,7 @@ func (q *Queries) SuspendWorkspace(ctx context.Context, arg SuspendWorkspacePara
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,
@@ -1328,24 +1343,26 @@ func (q *Queries) UpdateMemberTierAndCapabilities(ctx context.Context, arg Updat
 
 const updateWorkspaceName = `-- name: UpdateWorkspaceName :one
 UPDATE workspaces
-SET name = $2
+SET name = $2, description = $3
 WHERE workspaces.id = $1
-RETURNING id, parent_id, root_id, name, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
+RETURNING id, parent_id, root_id, name, description, status, single_principal, created_by, created_at, updated_at, archived_at, suspended_at, suspended_by, delete_after
 `
 
 type UpdateWorkspaceNameParams struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
 }
 
 func (q *Queries) UpdateWorkspaceName(ctx context.Context, arg UpdateWorkspaceNameParams) (Workspace, error) {
-	row := q.db.QueryRow(ctx, updateWorkspaceName, arg.ID, arg.Name)
+	row := q.db.QueryRow(ctx, updateWorkspaceName, arg.ID, arg.Name, arg.Description)
 	var i Workspace
 	err := row.Scan(
 		&i.ID,
 		&i.ParentID,
 		&i.RootID,
 		&i.Name,
+		&i.Description,
 		&i.Status,
 		&i.SinglePrincipal,
 		&i.CreatedBy,

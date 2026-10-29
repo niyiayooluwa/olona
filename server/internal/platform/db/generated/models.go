@@ -294,6 +294,7 @@ type Workspace struct {
 	ParentID        pgtype.UUID     `json:"parent_id"`
 	RootID          uuid.UUID       `json:"root_id"`
 	Name            string          `json:"name"`
+	Description     *string         `json:"description"`
 	Status          WorkspaceStatus `json:"status"`
 	SinglePrincipal bool            `json:"single_principal"`
 	CreatedBy       uuid.UUID       `json:"created_by"`
