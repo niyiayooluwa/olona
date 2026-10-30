@@ -6,9 +6,11 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
+	token "server/internal/auth/token"
 	db "server/internal/platform/db/generated"
 	"server/internal/workspace/model"
 	"server/internal/workspace/repository"
@@ -340,4 +342,63 @@ func (service *WorkspaceService) ResumeWorkspace(ctx context.Context, workspaceI
 	}
 
 	return &resumed, nil
+}
+
+// ListMembers retrieves all active members belonging to a workspace, joined with their profile data.
+func (service *WorkspaceService) ListMembers(ctx context.Context, callerID, workspaceID uuid.UUID) ([]db.ListActiveMembersRow, error) {
+	// Guard: Caller needs view permissions; checkMutability is false so archived/suspended branches can still be viewed.
+	_, err := service.evaluator.EnforceAccess(ctx, callerID, workspaceID, model.CapWorkspaceView, false)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := service.repo.ListActiveMembers(ctx, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	return members, nil
+}
+
+// InviteMember issues an email invitation for a new member to join the workspace with a designated tier and capability set.
+// Returns the database invitation row and the raw token that should be emailed to the invitee.
+func (service *WorkspaceService) InviteMember(ctx context.Context, callerID, workspaceID uuid.UUID, email string, tier db.WorkspaceTier, capabilities []string) (*db.WorkspaceInvitation, string, error) {
+	// Guard 1: Caller needs member management capability; workspace must be active/mutable.
+	_, err := service.evaluator.EnforceAccess(ctx, callerID, workspaceID, model.CapWorkspaceManageMembers, true)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Rule: Owner tier can NEVER be granted via email link (§3 Rule 8 & §9).
+	if tier == db.WorkspaceTierOwner {
+		return nil, "", wksperr.ErrForbidden
+	}
+
+	// Generate secure 256-bit token (raw for email link, hash for DB storage).
+	rawToken, tokenHash, err := token.GenerateRandomToken()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Default 7-day expiration per spec (§15 Open Decision 7).
+	expiresAt := time.Now().Add(time.Hour)
+
+	var createdInvitation db.WorkspaceInvitation
+	err = service.repo.WithTx(ctx, func(txRepo repository.WorkspaceRepository) error {
+		var txErr error
+
+		createdInvitation, txErr = txRepo.CreateWorkspaceInvitation(ctx, workspaceID, email, tier, capabilities, tokenHash, callerID, expiresAt)
+		if txErr != nil {
+			return txErr
+		}
+
+		auditMeta := map[string]interface{}{"invited_email": email, "tier": tier}
+		_, txErr = txRepo.CreateAuditLog(ctx, workspaceID, &callerID, "member.invited", "invitation", &createdInvitation.ID, auditMeta)
+		return txErr
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &createdInvitation, rawToken, nil
 }
