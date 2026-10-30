@@ -998,7 +998,7 @@ SELECT DISTINCT
     workspaces.updated_at,
     direct_member.tier AS member_tier,
     direct_member.capabilities AS member_capabilities,
-    oversight_records.ancestor_id IS NOT NULL AS has_oversight
+    (oversight_records.ancestor_id IS NOT NULL)::bool AS has_oversight
 FROM workspaces
 LEFT JOIN workspace_members AS direct_member 
     ON direct_member.workspace_id = workspaces.id 
@@ -1032,7 +1032,7 @@ type ListVisibleWorkspacesForUserRow struct {
 	UpdatedAt          time.Time         `json:"updated_at"`
 	MemberTier         NullWorkspaceTier `json:"member_tier"`
 	MemberCapabilities []byte            `json:"member_capabilities"`
-	HasOversight       interface{}       `json:"has_oversight"`
+	HasOversight       bool              `json:"has_oversight"`
 }
 
 // ===================================
