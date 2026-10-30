@@ -212,7 +212,7 @@ SELECT DISTINCT
     workspaces.updated_at,
     direct_member.tier AS member_tier,
     direct_member.capabilities AS member_capabilities,
-    oversight_records.ancestor_id IS NOT NULL AS has_oversight
+    (oversight_records.ancestor_id IS NOT NULL)::bool AS has_oversight
 FROM workspaces
 -- Direct membership match
 LEFT JOIN workspace_members AS direct_member 
