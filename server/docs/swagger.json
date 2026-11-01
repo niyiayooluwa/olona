@@ -424,6 +424,279 @@
                 }
             }
         },
+        "/v1/invitations/accept": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Consumes an invitation token and adds caller to workspace. Caller email must match recipient email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Accept workspace invitation",
+                "parameters": [
+                    {
+                        "description": "Invitation token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AcceptInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "email does not match invitation recipient",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "invitation not found or expired",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/requests": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns pending governance requests across all child workspaces that caller has oversight authority to approve.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Head Office approval inbox",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.PendingInboxEnvelope"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/requests/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approves a pending request and atomically executes the state change. Requester cannot approve their own request.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Approve a governance request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "requester cannot approve or lack oversight authority",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "request not found or already decided",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "active children conflict",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/requests/{id}/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancels an open request. Only the user who originally created the request may cancel it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Cancel a governance request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "only original requester can cancel",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "request not found or already decided",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/requests/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rejects a pending request with an optional explanation. Requester cannot reject their own request.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Reject a governance request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rejection reason",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DecideRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "request not found or already decided",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/users/me": {
             "get": {
                 "security": [
@@ -583,6 +856,901 @@
                     }
                 }
             }
+        },
+        "/v1/workspaces": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the workspace switcher list containing all workspaces where the caller has membership or oversight.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "List visible workspaces",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceListEnvelope"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a root organization workspace (if parent_id is omitted) or a child subsidiary workspace.\nWhen creating a child, the target owner is atomically relocated from the parent.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "Create root or child workspace",
+                "parameters": [
+                    {
+                        "description": "Workspace creation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateWorkspaceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceRawEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or target owner not admin",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "caller lacks create_child capability",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "parent workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "parent owner cannot be relocated",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves workspace metadata along with caller's effective access (tier, origin, and capabilities).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "Get workspace details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "no access to workspace",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates workspace name and/or description. Requires workspace.manage_settings capability.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "Update workspace settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateWorkspaceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceRawEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied or workspace suspended",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/audit": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns paginated, immutable audit log events for the workspace. Requires workspace.view_audit capability.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "audit"
+                ],
+                "summary": "Get workspace audit logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.AuditListEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/invitations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns active, unaccepted, unrevoked invitations for the workspace. Requires workspace.manage_members.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "List outstanding invitations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.InvitationListEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends an invitation for a user to join with an admin, member, or viewer tier. Owner tier cannot be invited.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Invite user to workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Invitation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.InviteMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.InvitationEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "cannot invite owner or lacking manage_members capability",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/invitations/{invitationId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Revokes an active invitation token so it can no longer be used to join.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Revoke pending invitation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Invitation UUID",
+                        "name": "invitationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "invitation not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns active members of the workspace with user profile details. Requires workspace.view capability.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "List active workspace members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MemberListEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/members/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes an active member from the workspace, or allows caller to voluntarily leave. Sole owner cannot leave.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Remove a member or leave workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target User UUID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "member not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "sole owner cannot leave without transfer",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changes a member's tier and capability set. Cannot demote sole owner or promote directly to owner.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Update member role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target User UUID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New role configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateMemberRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.MessageEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "member not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "cannot demote sole owner",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/requests": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all governance requests created for a workspace. Requires workspace.view capability.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "List requests for a workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.RequestListEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Submits a Two-Key Control request (archive, delete, transfer_ownership, move). Requires matching request_* capability.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Open a governance request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateGovernanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.RequestEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or target user",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "permission denied",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "409": {
+                        "description": "active children block action",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/resume": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unfreezes a previously suspended child workspace via parent oversight authority.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "Resume a suspended workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceRawEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "caller lacks oversight authority",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/workspaces/{id}/suspend": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Immediately freezes a child workspace via parent oversight authority. Reversible via resume.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "Suspend a child workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.WorkspaceRawEnvelope"
+                        }
+                    },
+                    "403": {
+                        "description": "caller lacks oversight authority",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "404": {
+                        "description": "workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.ErrorEnvelope"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -622,6 +1790,93 @@
                 }
             }
         },
+        "db.Workspace": {
+            "type": "object",
+            "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "delete_after": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                },
+                "root_id": {
+                    "type": "string"
+                },
+                "single_principal": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "$ref": "#/definitions/db.WorkspaceStatus"
+                },
+                "suspended_at": {
+                    "type": "string"
+                },
+                "suspended_by": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.WorkspaceStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "suspended",
+                "archive_requested",
+                "archived",
+                "delete_requested",
+                "pending_deletion",
+                "deleted"
+            ],
+            "x-enum-varnames": [
+                "WorkspaceStatusActive",
+                "WorkspaceStatusSuspended",
+                "WorkspaceStatusArchiveRequested",
+                "WorkspaceStatusArchived",
+                "WorkspaceStatusDeleteRequested",
+                "WorkspaceStatusPendingDeletion",
+                "WorkspaceStatusDeleted"
+            ]
+        },
+        "handler.AcceptInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.AuditListEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AuditLogSummary"
+                    }
+                }
+            }
+        },
         "handler.ChangePasswordRequest": {
             "type": "object",
             "properties": {
@@ -633,10 +1888,99 @@
                 }
             }
         },
+        "handler.CreateGovernanceRequest": {
+            "type": "object",
+            "properties": {
+                "new_parent_id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "target_user_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateWorkspaceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_user_id": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.DecideRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ForgotPasswordRequest": {
             "type": "object",
             "properties": {
                 "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.InvitationData": {
+            "type": "object",
+            "properties": {
+                "invitation": {
+                    "$ref": "#/definitions/model.InvitationSummary"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.InvitationEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.InvitationData"
+                }
+            }
+        },
+        "handler.InvitationListEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.InvitationSummary"
+                    }
+                }
+            }
+        },
+        "handler.InviteMemberRequest": {
+            "type": "object",
+            "properties": {
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "tier": {
                     "type": "string"
                 }
             }
@@ -660,6 +2004,44 @@
                 }
             }
         },
+        "handler.MemberListEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MemberSummary"
+                    }
+                }
+            }
+        },
+        "handler.MessageEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handler.MessageResponse"
+                }
+            }
+        },
+        "handler.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.PendingInboxEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PendingRequestSummary"
+                    }
+                }
+            }
+        },
         "handler.ProfileEnvelope": {
             "type": "object",
             "properties": {
@@ -673,6 +2055,25 @@
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.RequestEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/model.RequestView"
+                }
+            }
+        },
+        "handler.RequestListEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.WorkspaceRequestSummary"
+                    }
                 }
             }
         },
@@ -750,6 +2151,20 @@
                 }
             }
         },
+        "handler.UpdateMemberRoleRequest": {
+            "type": "object",
+            "properties": {
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tier": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.UpdateProfileRequest": {
             "type": "object",
             "properties": {
@@ -763,6 +2178,17 @@
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.UpdateWorkspaceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -794,6 +2220,243 @@
                 }
             }
         },
+        "handler.WorkspaceEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/model.WorkspaceDetail"
+                }
+            }
+        },
+        "handler.WorkspaceListEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.WorkspaceSummary"
+                    }
+                }
+            }
+        },
+        "handler.WorkspaceRawEnvelope": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/model.WorkspaceView"
+                }
+            }
+        },
+        "model.AuditLogSummary": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "actor_email": {
+                    "type": "string"
+                },
+                "actor_id": {
+                    "type": "string"
+                },
+                "actor_name": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "target_id": {
+                    "type": "string"
+                },
+                "target_type": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.EffectiveAccess": {
+            "type": "object",
+            "properties": {
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tier": {
+                    "description": "\"owner\", \"admin\", \"member\", \"viewer\", or nil if oversight only",
+                    "type": "string"
+                },
+                "via": {
+                    "description": "\"membership\" or \"oversight\"",
+                    "type": "string"
+                }
+            }
+        },
+        "model.InvitationSummary": {
+            "type": "object",
+            "properties": {
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invited_by": {
+                    "type": "string"
+                },
+                "tier": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MemberSummary": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "joined_at": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tier": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PendingRequestSummary": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "new_parent_id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requested_by": {
+                    "type": "string"
+                },
+                "requester_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "target_user_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                },
+                "workspace_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RequestView": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "decided_at": {
+                    "type": "string"
+                },
+                "decided_by": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "new_parent_id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requested_by": {
+                    "type": "string"
+                },
+                "sole_approver": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "target_user_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
         "model.UserProfile": {
             "type": "object",
             "properties": {
@@ -819,6 +2482,140 @@
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.WorkspaceDetail": {
+            "type": "object",
+            "properties": {
+                "access": {
+                    "$ref": "#/definitions/model.EffectiveAccess"
+                },
+                "workspace": {
+                    "$ref": "#/definitions/db.Workspace"
+                }
+            }
+        },
+        "model.WorkspaceRequestSummary": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "new_parent_id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requested_by": {
+                    "type": "string"
+                },
+                "requester_name": {
+                    "type": "string"
+                },
+                "sole_approver": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "target_user_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "workspace_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.WorkspaceSummary": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "has_oversight": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "member_tier": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                },
+                "root_id": {
+                    "type": "string"
+                },
+                "single_principal": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.WorkspaceView": {
+            "type": "object",
+            "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "delete_after": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                },
+                "root_id": {
+                    "type": "string"
+                },
+                "single_principal": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "suspended_at": {
+                    "type": "string"
+                },
+                "suspended_by": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
