@@ -72,9 +72,10 @@ func LoadUser(repo repository.AuthRepository) echo.MiddlewareFunc {
 				return httperr.Fail(c, autherr.ErrAccountDeactivated)
 			}
 
-			// Store the account so RequireRole can read it
+			// Store the account so downstream handlers and RequireRole can read it
 			c.Set("account", model.Actor{
 				UserID:        id,
+				Email:         user.Email,
 				IsSuspended:   user.IsSuspended,
 				IsDeactivated: user.IsDeactivated,
 			})
@@ -117,4 +118,15 @@ func GetUserID(c echo.Context) uuid.UUID {
 		panic("user_id missing from context; did you forget the RequireAuth middleware?")
 	}
 	return id
+}
+
+// GetActor extracts the authenticated Actor from the Echo context.
+// It panics if the account is missing, which is safe because this should only be called
+// in handlers protected by LoadUser.
+func GetActor(c echo.Context) model.Actor {
+	actor, ok := c.Get("account").(model.Actor)
+	if !ok {
+		panic("account missing from context; did you forget the LoadUser middleware?")
+	}
+	return actor
 }

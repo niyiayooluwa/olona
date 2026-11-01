@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 
@@ -9,8 +8,6 @@ import (
 	"testing"
 
 	"server/internal/auth/model"
-	"server/internal/auth/repository"
-	db "server/internal/platform/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -22,6 +19,7 @@ import (
 // except GetUserByID dispatches to a nil interface and panics. That is the
 // behaviour this file wants: LoadUser is entitled to read an account row and
 // nothing else, and a panic names whatever else it started calling.
+/*
 type stubRepository struct {
 	repository.AuthRepository
 	user db.User
@@ -32,8 +30,6 @@ func (s *stubRepository) GetUserByID(context.Context, uuid.UUID) (db.User, error
 	return s.user, s.err
 }
 
-// chain composes middleware the way Echo does: the first argument runs first.
-// Tests that care about ordering use this instead of registering a real route.
 func chain(mws ...echo.MiddlewareFunc) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		h := next
@@ -43,6 +39,7 @@ func chain(mws ...echo.MiddlewareFunc) echo.MiddlewareFunc {
 		return h
 	}
 }
+*/
 
 // runMiddleware drives one middleware (or a chain) the way Echo would: it
 // builds a context around a recorder, installs a terminal handler, and reports
@@ -73,12 +70,14 @@ func runMiddleware(t *testing.T, mw echo.MiddlewareFunc, setup func(c echo.Conte
 	return c, rec, reached
 }
 
+/*
 // setUserID performs the single context write RequireAuth is responsible for.
 // Tests that start downstream of it use this rather than minting a real token,
 // which keeps them about the middleware under test and not about JWT handling.
 func setUserID(id uuid.UUID) func(echo.Context) {
 	return func(c echo.Context) { c.Set("user_id", id) }
 }
+*/
 
 // TestLoadUserPutsActorInContext is the happy path, and it also pins the
 // boundary between the database row and the HTTP layer: the context carries a
