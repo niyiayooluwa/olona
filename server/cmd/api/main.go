@@ -29,6 +29,9 @@ import (
 	db "server/internal/platform/db/generated"
 	"server/internal/platform/httpserver"
 	"server/internal/platform/mailer"
+	workspacehandler "server/internal/workspace/handler"
+	workspacerepo "server/internal/workspace/repository"
+	workspacesvc "server/internal/workspace/service"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -163,10 +166,16 @@ func main() {
 	// 4. Initialize Services
 	authServices := service.NewServices(authRepo, authCfg, jwtIssuer, mailService)
 
+	workspaceRepo := workspacerepo.NewWorkspaceRepository(queries, workspacerepo.WithTxSource(pool))
+	accessEvaluator := workspacesvc.NewAccessEvaluator(workspaceRepo)
+	workspaceService := workspacesvc.NewWorkspaceService(workspaceRepo, accessEvaluator)
+
 	// 5. Initialize Handlers
 	authHandler := authhandler.NewAuthHandler(authServices)
+	workspaceHandler := workspacehandler.NewWorkspaceHandler(workspaceService)
 	handlers := httpserver.Handlers{
-		Auth: authHandler,
+		Auth:      authHandler,
+		Workspace: workspaceHandler,
 	}
 
 	// 6. Build HTTP Router

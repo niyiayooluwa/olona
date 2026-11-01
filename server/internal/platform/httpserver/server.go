@@ -10,6 +10,7 @@ import (
 	"server/internal/auth/repository"
 	"server/internal/auth/token"
 	"server/internal/platform/apiresponse"
+	workspacehandler "server/internal/workspace/handler"
 
 	_ "server/docs"
 
@@ -20,7 +21,8 @@ import (
 
 // Handlers bundles every domain's HTTP handler so we don't have a giant param list.
 type Handlers struct {
-	Auth *handler.AuthHandler
+	Auth      *handler.AuthHandler
+	Workspace *workspacehandler.WorkspaceHandler
 }
 
 // NewRouter constructs the global HTTP pipeline with middlewares and routes.
@@ -148,6 +150,37 @@ func NewRouter(
 	userGroup.PATCH("/me", h.Auth.UpdateProfile)
 	userGroup.POST("/me/password", h.Auth.ChangePassword)
 	userGroup.DELETE("/me", h.Auth.DeleteProfile)
+
+	// Workspace & Governance Protected Routes
+	if h.Workspace != nil {
+		// Workspace lifecycle & settings
+		v1.POST("/workspaces", h.Workspace.CreateWorkspace)
+		v1.GET("/workspaces", h.Workspace.ListWorkspaces)
+		v1.GET("/workspaces/:id", h.Workspace.GetWorkspace)
+		v1.PATCH("/workspaces/:id", h.Workspace.UpdateWorkspace)
+		v1.POST("/workspaces/:id/suspend", h.Workspace.SuspendWorkspace)
+		v1.POST("/workspaces/:id/resume", h.Workspace.ResumeWorkspace)
+
+		// Members & Invitations
+		v1.GET("/workspaces/:id/members", h.Workspace.ListMembers)
+		v1.POST("/workspaces/:id/invitations", h.Workspace.InviteMember)
+		v1.GET("/workspaces/:id/invitations", h.Workspace.ListPendingInvitations)
+		v1.DELETE("/workspaces/:id/invitations/:invitationId", h.Workspace.RevokeInvitation)
+		v1.POST("/invitations/accept", h.Workspace.AcceptInvitation)
+		v1.PATCH("/workspaces/:id/members/:userId", h.Workspace.UpdateMemberRole)
+		v1.DELETE("/workspaces/:id/members/:userId", h.Workspace.RemoveMember)
+
+		// Two-Key Governance Requests & Approvals
+		v1.POST("/workspaces/:id/requests", h.Workspace.CreateRequest)
+		v1.GET("/workspaces/:id/requests", h.Workspace.ListWorkspaceRequests)
+		v1.GET("/requests", h.Workspace.ListPendingRequests)
+		v1.POST("/requests/:id/approve", h.Workspace.ApproveRequest)
+		v1.POST("/requests/:id/reject", h.Workspace.RejectRequest)
+		v1.POST("/requests/:id/cancel", h.Workspace.CancelRequest)
+
+		// Immutable Audit Trail
+		v1.GET("/workspaces/:id/audit", h.Workspace.ListAuditLogs)
+	}
 
 	return e
 }
