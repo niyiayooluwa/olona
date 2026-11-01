@@ -1,3 +1,5 @@
+// Package model defines domain entities, access evaluations, capability presets,
+// and presentation view models for the workspace domain.
 package model
 
 import (

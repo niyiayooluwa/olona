@@ -22,9 +22,9 @@ import (
 //   - "move": Reparents the workspace subtree under a new parent workspace within the same tree.
 //
 // Business Rules & Guarantees:
-//   1. Authority: Requester must possess the matching "workspace.request_*" capability.
-//   2. Expiration: Requests default to a 14-day validity window (§15 Open Decision 6).
-//   3. Prerequisite validation (e.g. active child blocking, admin candidate verification) happens upfront.
+//  1. Authority: Requester must possess the matching "workspace.request_*" capability.
+//  2. Expiration: Requests default to a 14-day validity window (§15 Open Decision 6).
+//  3. Prerequisite validation (e.g. active child blocking, admin candidate verification) happens upfront.
 func (service *WorkspaceService) CreateRequest(
 	ctx context.Context,
 	workspaceID, callerID uuid.UUID,
@@ -141,8 +141,8 @@ func (service *WorkspaceService) CreateRequest(
 // ListPendingRequests retrieves pending governance requests awaiting the caller's oversight decision.
 //
 // Structural Separation of Duties (§3 Rule 11 & §8):
-//  - Returns requests for child workspaces where caller possesses oversight on the IMMEDIATE parent.
-//  - Automatically filters out requests authored by the caller (requester != approver).
+//   - Returns requests for child workspaces where caller possesses oversight on the IMMEDIATE parent.
+//   - Automatically filters out requests authored by the caller (requester != approver).
 func (service *WorkspaceService) ListPendingRequests(
 	ctx context.Context,
 	callerID uuid.UUID,
